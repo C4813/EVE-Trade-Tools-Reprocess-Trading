@@ -1,0 +1,50 @@
+/* =========================================================
+   ETT Reprocess Trading – Admin UI
+   ========================================================= */
+
+.ett-wrap .ett-card{
+    background:#fff;
+    border:1px solid #ccd0d4;
+    border-radius:8px;
+    padding:16px;
+    margin:0;
+}
+
+.ett-statusline{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:12px;
+}
+
+.ett-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#a7aaad;
+}
+.ett-dot.ok{ background:#00a32a; }
+.ett-dot.bad{ background:#d63638; }
+
+.ett-muted{ color:#6c7781; }
+.ett-ok{ color:#1d7f2b; font-weight:600; }
+.ett-bad{ color:#b32d2e; font-weight:600; }
+
+/* Two-column layout for settings cards */
+.ett-settings-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+}
+
+/* Remove vertical margins since grid handles spacing */
+.ett-settings-grid .ett-card {
+    margin: 0;
+}
+
+/* Responsive collapse */
+@media (max-width: 900px) {
+    .ett-settings-grid {
+        grid-template-columns: 1fr;
+    }
+}

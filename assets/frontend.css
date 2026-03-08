@@ -1,0 +1,202 @@
+.ett-character { border:1px solid #ccc; margin-bottom:10px; }
+    .ett-character-header {
+        background:#f5f5f5;
+        padding:8px;
+        cursor:pointer;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    }
+    .ett-character-body { display:none; padding:10px; }
+    .ett-character-body.open { display:block; }
+    .ett-disconnect { font-size:0.9em; color:#c00; text-decoration:none; }
+
+    /* Tables inside character dropdowns
+       Many WP themes force table widths via highly-specific selectors (sometimes with !important).
+       Use a more specific selector + !important to ensure our tables size to content and center.
+    */
+    .ett-character-body table.ett-table {
+        width:auto !important;
+        max-width:none !important;
+        table-layout:auto !important;
+        border-collapse:collapse !important;
+        display:inline-table !important; /* prevents full-width expansion in some themes */
+        margin:0 auto 20px !important;   /* center the table */
+    }
+    .ett-character-body { text-align:center; } /* centers inline-table */
+    .ett-character-body table.ett-table th,
+    .ett-character-body table.ett-table td {
+        border:1px solid #ccc !important;
+        padding:6px 8px !important;
+        text-align:center !important; /* center cell content */
+        vertical-align:middle;
+        white-space:nowrap;
+    }
+    .ett-character-body table.ett-table th {
+        background:#f2f2f2 !important;
+        font-weight:700 !important; /* explicit bold headings */
+    }
+    /* Remove alternating (zebra) row backgrounds coming from theme CSS */
+    .ett-character-body table.ett-table tbody tr:nth-child(odd),
+    .ett-character-body table.ett-table tbody tr:nth-child(even) {
+        background: inherit !important;
+    }
+
+    /* Also neutralize any theme hover highlight */
+    .ett-character-body table.ett-table tbody tr:hover {
+        background: inherit !important;
+    }
+
+    .ett-table td[rowspan] { vertical-align: middle; }
+
+/* Make it obvious headers have tooltips */
+    .ett-character-body table.ett-table th[title] { cursor: help; }
+
+/* ── Trading Tool ────────────────────────────────────────────────────────── */
+.ett-trading-tool {
+    max-width: 700px;
+}
+
+.ett-trading-tool h4 {
+    margin: 0 0 12px;
+    text-align: center;
+}
+
+/* "Filter Options" heading spans both filter columns */
+.ett-trading-tool .ett-heading-full {
+    text-align: center;
+    margin: 0 0 12px;
+}
+
+/* Shared field block: label above, input below, centred */
+.ett-trading-tool .ett-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+}
+
+.ett-trading-tool .ett-field label {
+    font-weight: 600;
+    font-size: 0.92em;
+    white-space: nowrap;
+}
+
+/* Make selects and number inputs look identical */
+.ett-trading-tool .ett-field select,
+.ett-trading-tool .ett-field input[type="number"] {
+    width: 160px;
+    padding: 4px 6px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95em;
+    line-height: 1.4;
+    box-sizing: border-box;
+    appearance: auto;
+    -webkit-appearance: auto;
+}
+
+/* Two-column filter section */
+.ett-trading-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 40px;
+    margin-bottom: 20px;
+}
+
+/* Each filter column stacks its fields vertically, centred */
+.ett-trading-filters .ett-filter-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Two-column options section — each column is an independent flex stack */
+.ett-trading-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 40px;
+    margin-bottom: 20px;
+}
+
+/* Each options column stacks heading + fields vertically, centred */
+.ett-trading-options .ett-options-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Buttons */
+.ett-trading-btn {
+    display: block;
+    margin: 0 auto 20px;
+    padding: 8px 18px;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.ett-trading-btn:hover {
+    background: #005a87;
+}
+
+/* Hide the number spinner arrows to match dropdown appearance */
+.ett-trading-tool input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.ett-trading-tool input[type="number"]::-webkit-inner-spin-button,
+.ett-trading-tool input[type="number"]::-webkit-outer-spin-button {
+    display: none;
+}
+
+.ett-token-warning {
+    color: #c00;
+    font-weight: bold;
+    margin: 4px 0 12px;
+}
+
+.ett-connect-wrap {
+    margin-top: 15px;
+}
+
+.ett-char-rec-text {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 3px;
+}
+
+.ett-error {
+    color: #b32d2e;
+    font-style: italic;
+}
+
+.ett-field { transition: opacity 0.1s; }
+
+.ett-daily-profit {
+    margin: 12px 0 8px;
+    padding: 10px 14px;
+    background: #f0f7ee;
+    border-left: 4px solid #4a9e5c;
+    border-radius: 3px;
+    font-size: 1em;
+    color: #1a3a22;
+    text-align: center;
+}
+
+.ett-daily-profit strong {
+    font-size: 1.1em;
+}
+
+.ett-price-date {
+    font-size: 0.85em;
+    font-weight: normal;
+    color: #888;
+}
