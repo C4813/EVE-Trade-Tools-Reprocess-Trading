@@ -25,6 +25,10 @@ if (!defined('ABSPATH')) exit;
         <p class="ett-token-warning">&#9888; Token expired &mdash; check characters below and reconnect.</p>
     <?php endif; ?>
 
+    <div class="ett-connect-wrap">
+        <?php echo ETT_RT_OAuth::connect_button(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+    </div>
+
     <?php if (empty($characters)) : ?>
         <p>No authenticated characters yet. Use &quot;Connect with EVE Online&quot; to add one.</p>
     <?php else : ?>
@@ -54,8 +58,4 @@ if (!defined('ABSPATH')) exit;
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
-
-    <div class="ett-connect-wrap">
-        <?php echo ETT_RT_OAuth::connect_button(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-    </div>
 </div>
