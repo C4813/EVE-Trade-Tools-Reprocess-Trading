@@ -13,6 +13,7 @@ final class ETT_RT {
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_frontend_assets']);
         add_shortcode('ett_esi_reprocess_profile', [__CLASS__, 'shortcode_profile']);
         add_shortcode('ett_trading_tool', [__CLASS__, 'shortcode_trading_tool']);
+        add_shortcode('ett_trading_howto', [__CLASS__, 'shortcode_trading_howto']);
         add_action('wp_ajax_ett_rt_generate_list',        [__CLASS__, 'ajax_generate_list']);
         add_action('wp_ajax_nopriv_ett_rt_generate_list', [__CLASS__, 'ajax_generate_list']);
         add_action('wp_ajax_ett_rt_get_characters',       [__CLASS__, 'ajax_get_characters']);
@@ -74,7 +75,7 @@ final class ETT_RT {
         $content = (string) $post->post_content;
 
         // If page contains our shortcode, make it non-cacheable
-        if (has_shortcode($content, 'ett_esi_reprocess_profile') || has_shortcode($content, 'ett_trading_tool')) {
+        if (has_shortcode($content, 'ett_esi_reprocess_profile') || has_shortcode($content, 'ett_trading_tool') || has_shortcode($content, 'ett_trading_howto')) {
             self::nocache_headers();
             self::litespeed_nocache();
         }
@@ -101,7 +102,7 @@ final class ETT_RT {
         if (!($post instanceof WP_Post)) return;
 
         $content = (string) $post->post_content;
-        if (!has_shortcode($content, 'ett_esi_reprocess_profile') && !has_shortcode($content, 'ett_trading_tool')) return;
+        if (!has_shortcode($content, 'ett_esi_reprocess_profile') && !has_shortcode($content, 'ett_trading_tool') && !has_shortcode($content, 'ett_trading_howto')) return;
 
         $url = self::url();
         wp_enqueue_style('ett-rt-frontend', $url . 'assets/frontend.css', [], ETT_RT_VERSION);
@@ -146,6 +147,82 @@ final class ETT_RT {
         return (string) ob_get_clean();
     }
 
+    /**
+     * Shortcode: [ett_trading_howto]
+     * Renders a collapsible "How to use the trading tool" guide.
+     */
+    public static function shortcode_trading_howto(): string {
+        ob_start();
+        ?>
+        <div class="ett-howto-wrap">
+            <div class="ett-character">
+                <div class="ett-character-header ett-howto-header">
+                    <strong>&#9432; How to Use the Reprocessing Trading Tool</strong>
+                    <span class="ett-howto-toggle">&#9660;</span>
+                </div>
+                <div class="ett-character-body ett-howto-body">
+                    <div class="ett-howto-content" style="text-align:left; max-width:680px; margin:0 auto; line-height:1.6;">
+
+                        <h4 style="margin-top:0;">Overview</h4>
+                        <p>This tool identifies EVE Online market items that are profitable to <strong>buy on the market and reprocess</strong> into raw minerals/materials, which are then sold. It factors in your character&rsquo;s skills, standings, and brokerage fees to give you accurate per-item profit estimates.</p>
+
+                        <h4>Step 1 &mdash; Authenticate a Character</h4>
+                        <p>Before using the tool, at least one EVE Online character must be authenticated via the <em>Connect with EVE Online</em> button on the character profile page. Your character&rsquo;s <strong>Scrapmetal Processing</strong> skill level, standings, and fees are used to calculate accurate reprocessing yields and tax rates.</p>
+
+                        <h4>Step 2 &mdash; Filter Options</h4>
+                        <ul>
+                            <li><strong>Trade Hub:</strong> The market station to pull buy prices from (e.g. Jita 4-4).</li>
+                            <li><strong>Reprocess Character:</strong> The character whose skills &amp; standings determine your reprocessing yield and tax. Characters are sorted by most favourable first. The format shown is: <code>Name (Scrp: X | Tax: Y% | Fee: Z%)</code>.</li>
+                            <li><strong>Filter Market Group:</strong> The category of items to scan (e.g. Ship Equipment, Drones).</li>
+                            <li><strong>Exclude Capital-Sized?:</strong> When set to <em>Yes</em>, filters out capital-sized modules, ship hulls, and fighters &mdash; these typically require specialist buyers and large capital to process.</li>
+                            <li><strong>Meta Only?:</strong> When set to <em>Yes</em>, only shows <em>Meta</em> tier items (faction-originated T1 items dropped by NPCs). These are often the most reprocessing-profitable since they are bought cheaply but yield the same minerals as T1 originals.</li>
+                        </ul>
+
+                        <h4>Step 3 &mdash; Pricing Options</h4>
+                        <ul>
+                            <li><strong>Sell To:</strong> Whether to sell the reprocessed materials to <em>Buy Orders</em> (instant sale) or via <em>Sell Orders</em> (you list them; sales tax and broker fee apply). Sell Orders are usually more profitable but require patience.</li>
+                            <li><strong>Minimum / Maximum Margin %:</strong> Only items within this profit margin range will appear. Margin is calculated as <code>((Reprocess Value &minus; Buy Cost) / Buy Cost) &times; 100</code>.</li>
+                            <li><strong>Minimum Daily Volume:</strong> Filters out items with very low trade activity. Higher volume means easier buying and selling.</li>
+                            <li><strong>Stack Size:</strong> How many of an item you intend to buy and reprocess in one batch. Note: items have a <em>portion size</em> (the minimum reprocessable quantity). For example, ammunition has a portion size of 100, so a stack size of 100 represents exactly 1 reprocessing batch (100 physical items). A stack of 1000 = 10 batches of 100 ammo each. Profit is calculated per physical item based on whole batches; any remainder below a full portion size is discarded.</li>
+                        </ul>
+
+                        <h4>Step 4 &mdash; Advanced Options</h4>
+                        <ul>
+                            <li><strong>Buy Order QTY Recommendation?:</strong> When set to <em>Yes</em>, the displayed quantity in the item list is scaled to the <em>% of Daily Volume</em> you set, giving you a recommended buy order size.</li>
+                            <li><strong>% of Daily Volume:</strong> Only active when Buy Order QTY is enabled. Sets what fraction of average daily volume to recommend (e.g. 10% means buy up to 10% of daily traded volume).</li>
+                            <li><strong>Re-list Brokerage Fees?:</strong> When set to <em>Yes</em>, the tool factors in the cost of modifying your buy orders a set number of times. Each update costs a fraction of the broker fee.</li>
+                            <li><strong>Order Updates:</strong> Only active when Re-list is enabled. Enter how many times you expect to update each buy order before it fills.</li>
+                        </ul>
+
+                        <h4>Step 5 &mdash; Reading the Results</h4>
+                        <p>After clicking <strong>Generate List</strong>, results appear below. The green summary box shows the <strong>Potential Daily Profit</strong> along with the age of the price data used.</p>
+                        <p>Each line in the item list reads:</p>
+                        <p style="font-family:monospace; background:#f4f4f4; padding:6px 10px; border-radius:3px;">Item Name &nbsp;[ Buy Price &nbsp;/ &nbsp;Reprocess Value &nbsp;/ &nbsp;Qty &nbsp;/ &nbsp;Margin% ]</p>
+                        <ul>
+                            <li><strong>Buy Price:</strong> The highest current buy order for that item at the selected hub (ISK per item).</li>
+                            <li><strong>Reprocess Value:</strong> Estimated ISK returned per item after reprocessing, applying your skill yield, reprocessing tax, sales tax, and broker fees.</li>
+                            <li><strong>Qty:</strong> Recommended quantity to buy (either based on your stack size, or scaled to % of daily volume if enabled).</li>
+                            <li><strong>Margin%:</strong> Profit margin as a percentage of the total buy cost including broker fee.</li>
+                        </ul>
+
+                        <h4>Step 6 &mdash; Market Quickbar</h4>
+                        <p>After the list is generated, the button changes to <strong>Generate Market Quickbar</strong>. Clicking it copies a formatted list to your clipboard that can be pasted directly into the EVE Online Market Quickbar. Open the Market window in-game, click the Quickbar import icon, and paste.</p>
+
+                        <h4>Tips</h4>
+                        <ul>
+                            <li>Price data is fetched periodically &mdash; check the <em>Oldest price data</em> timestamp (shown in EVE Time / UTC) to know how fresh your results are.</li>
+                            <li>High-volume items with moderate margins (&gt;5%) are usually more consistently profitable than low-volume high-margin items.</li>
+                            <li>Meta modules from missions (e.g. Shield Extender IIs, Damage Controls) are often excellent reprocessing targets.</li>
+                            <li>Changing any setting automatically clears the results &mdash; simply click the button again to regenerate with the updated parameters.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
     public static function ajax_generate_list(): void {
         check_ajax_referer('ett_rt_generate_list', 'nonce');
 
@@ -179,14 +256,51 @@ final class ETT_RT {
         // Expand root into all descendant group IDs
         $all_group_ids = self::expand_market_groups($db, $root_id);
 
-        // Exclude capital market groups by name prefix
+        // Exclude capital market groups and ALL their descendants.
+        // We first find the root capital group IDs by name, then recursively expand each
+        // so that sub-groups like Dreadnoughts > [specific hull tiers] are also removed.
         if ($exclude_capital && !empty($all_group_ids)) {
-            $safe        = implode(',', array_map('intval', $all_group_ids));
-            $capital_ids = $db->get_col(
-                "SELECT market_group_id FROM ett_invMarketGroups WHERE market_group_id IN ($safe) AND name LIKE 'Capital%'"
+            $safe = implode(',', array_map('intval', $all_group_ids));
+            // Seed groups: anything named Capital*, known capital hull categories, fighters.
+            $seed_capital_ids = $db->get_col(
+                "SELECT market_group_id FROM ett_invMarketGroups
+                  WHERE market_group_id IN ($safe)
+                    AND (
+                        name LIKE 'Capital%'
+                        OR name IN (
+                            'Dreadnoughts',
+                            'Carriers',
+                            'Force Auxiliaries',
+                            'Supercarriers',
+                            'Titans',
+                            'Freighters',
+                            'Jump Freighters',
+                            'Capital Industrial Ships',
+                            'Industrial Command Ships',
+                            'Fighters',
+                            'Light Fighters',
+                            'Support Fighters',
+                            'Heavy Fighters',
+                            'Standup Fighters',
+                            'Standup Light Fighters',
+                            'Standup Support Fighters',
+                            'Standup Heavy Fighters'
+                        )
+                    )"
             );
-            $capital_ids   = array_map('intval', $capital_ids ?: []);
-            $all_group_ids = array_values(array_diff($all_group_ids, $capital_ids));
+            $seed_capital_ids = array_map('intval', $seed_capital_ids ?: []);
+
+            // For each seed group, expand to include ALL descendants so that child groups
+            // (e.g. specific hull tiers under Capital Ships) are also removed.
+            $all_capital_to_remove = [];
+            foreach ($seed_capital_ids as $cap_root) {
+                $descendants = self::expand_market_groups($db, $cap_root);
+                foreach ($descendants as $d) {
+                    $all_capital_to_remove[$d] = true;
+                }
+            }
+
+            $all_group_ids = array_values(array_diff($all_group_ids, array_keys($all_capital_to_remove)));
         }
 
         if (empty($all_group_ids)) {
@@ -282,6 +396,17 @@ final class ETT_RT {
         }
         $relist_fees      = sanitize_key((string) ($_POST['relist_brokerage'] ?? 'no')) === 'yes';
         $order_updates    = max(0, intval(wp_unslash($_POST['order_updates'] ?? 0)));
+
+        // Override broker fee: if active, replaces the character-derived broker_fee.
+        // Input is a percentage (e.g. 3.00 = 3%). Minimum allowed is 1% (0.01).
+        // When override is active the minimum per-item buy fee = max(rate × price, 100 ISK).
+        $override_broker     = sanitize_key((string) ($_POST['override_broker'] ?? 'no')) === 'yes';
+        $override_broker_pct = floatval(wp_unslash($_POST['override_broker_pct'] ?? 3.0));
+        if ($override_broker) {
+            // Clamp: must be at least 1%, no more than 100%
+            $override_broker_pct = max(1.0, min(100.0, round($override_broker_pct, 2)));
+            $broker_fee          = $override_broker_pct / 100.0;
+        }
         // Scrapmetal reprocessing yield: NPC station base is 50%, Scrapmetal Processing adds 2% per level.
         // Formula: 0.50 × (1 + skill × 0.02) → level 5 = 55%, level 0 = 50%.
         $yield_multiplier = 0.50 * (1.0 + ($scrapmetal_skill * 0.02));
@@ -427,11 +552,17 @@ final class ETT_RT {
                 }
             }
 
-            // Margin: cost basis includes brokerage fee on the buy, display price does not
+            // Margin: cost basis includes brokerage fee on the buy, display price does not.
+            // When override is active: effective buy fee = max(rate × price, 100 ISK) per item.
             $margin = null;
             if ($buy_price !== null && $reprocess_value !== null && $buy_price > 0.0) {
-                $cost_with_fee = $buy_price * (1.0 + $broker_fee);
-                $margin        = (($reprocess_value - $cost_with_fee) / $cost_with_fee) * 100.0;
+                if ($override_broker) {
+                    $buy_fee_isk   = max($broker_fee * $buy_price, 100.0);
+                    $cost_with_fee = $buy_price + $buy_fee_isk;
+                } else {
+                    $cost_with_fee = $buy_price * (1.0 + $broker_fee);
+                }
+                $margin = (($reprocess_value - $cost_with_fee) / $cost_with_fee) * 100.0;
             }
 
             // Apply margin and volume filters
