@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,8 +18,9 @@ This plugin depends on EVE Trade Tools Price Helper for SSO credentials and the 
 
 **Shortcodes**
 
-* `[ett_esi_reprocess_profile]` — displays the logged-in user's connected EVE characters with their skill and standings summary, and a button to connect additional characters via EVE SSO.
+* `[ett_esi_reprocess_profile]` — displays the logged-in user's connected EVE characters with their skill and standings summary, and a button to connect additional characters via EVE SSO. The connect button is shown above the character list for easier access.
 * `[ett_trading_tool]` — interactive reprocessing margin calculator. Requires at least one authenticated character. Both shortcode pages are automatically excluded from page caching.
+* `[ett_trading_howto]` — collapsible how-to guide explaining all options in the trading tool. Can be placed on any page, independently of the trading tool.
 
 **Trading tool**
 
@@ -27,12 +28,18 @@ The trading tool queries the external EVE market database populated by Price Hel
 
 * **Scrapmetal Processing** skill — NPC station base yield is 50%, with 2% added per skill level (55% at level 5).
 * **Sales tax** — 7.5% base, reduced by 11% per level of Accounting, floored at 3.37%.
-* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub.
+* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 1%, floor of 100 ISK per transaction).
 * **Reprocessing tax** — 5% of adjusted output value, reduced to zero once effective corporation standing reaches 6.67. Connections (positive standing) or Diplomacy (negative standing) improve effective standing.
 * **Relist brokerage** — optional; accounts for order-modification fees based on Advanced Broker Relations level and the number of expected order updates.
 * **portionSize** — items are reprocessed in whole batches; the tool uses the correct batch size per item type.
 
-Results are filtered by margin range, minimum daily volume, and optionally restricted to Meta-tier items or non-capital items. If multiple characters are authenticated, the tool recommends the one with the lowest reprocessing tax and broker fee for the selected hub.
+Results are filtered by margin range, minimum daily volume, and optionally restricted to Meta-tier items or non-capital items. Capital exclusion now recursively removes all descendant market groups, correctly filtering capital ship hulls, fighters (including Standup variants), and their sub-tiers. The Meta Only filter is only available for the Ship Equipment group. The Exclude Capital-Sized filter is disabled automatically when the Implants group is selected.
+
+If multiple characters are authenticated, the tool recommends the one with the lowest reprocessing tax and broker fee for the selected hub by default, but the user can override this.
+
+The Generate List button transforms into the Generate Market Quickbar button after results are loaded — only one button is ever shown. Changing any filter or option automatically clears the results and resets the button to Regenerate List.
+
+All timestamps for price data age are displayed in EVE time (UTC).
 
 **Supported trade hubs:** Jita, Amarr, Rens, Dodixie, Hek
 
@@ -52,6 +59,7 @@ ESI skill and standings data is cached per character for one hour via WordPress 
 4. Upload the `ett-reprocess-trading` folder to `/wp-content/plugins/` and activate the plugin.
 5. Place `[ett_esi_reprocess_profile]` on a page where users can connect their characters.
 6. Place `[ett_trading_tool]` on the page where you want the trading tool to appear.
+7. Optionally place `[ett_trading_howto]` on any page to display the usage guide.
 
 Both shortcode pages require users to be logged in to WordPress.
 
@@ -75,7 +83,7 @@ Yes. Multiple characters can be authenticated per WordPress user. The trading to
 
 = Does this work with page caching plugins? =
 
-Pages containing either shortcode are automatically marked as non-cacheable on each request using standard WordPress no-cache headers and the `DONOTCACHEPAGE` constant. LiteSpeed Cache is also explicitly disabled on those pages via the `X-LiteSpeed-Cache-Control` header.
+Pages containing any of the plugin shortcodes are automatically marked as non-cacheable on each request using standard WordPress no-cache headers and the `DONOTCACHEPAGE` constant. LiteSpeed Cache is also explicitly disabled on those pages via the `X-LiteSpeed-Cache-Control` header.
 
 = What is removed on uninstall? =
 
@@ -83,10 +91,30 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 
 == Changelog ==
 
+= 1.1.0 =
+* Added `[ett_trading_howto]` shortcode — collapsible in-page usage guide.
+* Trading tool UI restructured with grouped cards for visual separation of Pricing Options, Advanced Options, margin filters, and brokerage settings.
+* Filter Options section repositioned below Pricing and Advanced Options.
+* Generate List and Generate Market Quickbar are now a single button that changes state; only one button is ever visible.
+* Capital exclusion now recursively removes all descendant market groups, fixing incorrect inclusion of capital ship hulls and their sub-tiers when the Ships group was selected.
+* Fighters and Standup Fighters added to the capital-sized exclusion list.
+* Meta Only filter now greys out and defaults to No when any market group other than Ship Equipment is selected.
+* Exclude Capital-Sized filter now greys out and defaults to No when the Implants group is selected.
+* Added Override Brokerage Fee option — allows a manual percentage entry (minimum 1%) that replaces the character-derived broker fee; minimum effective fee is 100 ISK or 1%, whichever is greater.
+* Oldest price data timestamp now displayed in EVE time (UTC) rather than raw server time.
+* Reprocess Character and Filter Market Group dropdowns now auto-widen to fit their content.
+* Result legend added to the daily profit box clarifying the column order (Buy Price / Reprocess Value / 30d Volume or QTY Recommendation / Margin%).
+* Connect with EVE Online button moved to above the character list.
+* Stack size and all numeric inputs now enforce a minimum of 1 or 0 as appropriate; zero and negative values are rejected.
+* Plugin shortcode pages now include `[ett_trading_howto]` in the cache bypass check.
+
 = 1.0.0 =
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+UI overhaul, capital exclusion fix for ship hulls, new Override Brokerage Fee option, fighters added to capital filter, and a new how-to guide shortcode. No database changes. No configuration required after update.
 
 = 1.0.0 =
 Initial release.
