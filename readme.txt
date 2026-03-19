@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.1.0
+Stable tag: 1.1.2
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,12 +28,12 @@ The trading tool queries the external EVE market database populated by Price Hel
 
 * **Scrapmetal Processing** skill — NPC station base yield is 50%, with 2% added per skill level (55% at level 5).
 * **Sales tax** — 7.5% base, reduced by 11% per level of Accounting, floored at 3.37%.
-* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 1%, floor of 100 ISK per transaction).
+* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 1%) that replaces the character-derived fee; minimum effective fee is always 100 ISK or 1%, whichever is greater.
 * **Reprocessing tax** — 5% of adjusted output value, reduced to zero once effective corporation standing reaches 6.67. Connections (positive standing) or Diplomacy (negative standing) improve effective standing.
 * **Relist brokerage** — optional; accounts for order-modification fees based on Advanced Broker Relations level and the number of expected order updates.
 * **portionSize** — items are reprocessed in whole batches; the tool uses the correct batch size per item type.
 
-Results are filtered by margin range, minimum daily volume, and optionally restricted to Meta-tier items or non-capital items. Capital exclusion now recursively removes all descendant market groups, correctly filtering capital ship hulls, fighters (including Standup variants), and their sub-tiers. The Meta Only filter is only available for the Ship Equipment group. The Exclude Capital-Sized filter is disabled automatically when the Implants group is selected.
+Results are filtered by margin range, minimum daily volume, and optionally restricted to Meta-tier items or non-capital items. Capital exclusion recursively removes all descendant market groups, correctly filtering capital ship hulls, fighters (including Standup variants), and their sub-tiers. The Meta Only filter is only available for the Ship Equipment group. The Exclude Capital-Sized filter is disabled automatically when the Implants group is selected.
 
 If multiple characters are authenticated, the tool recommends the one with the lowest reprocessing tax and broker fee for the selected hub by default, but the user can override this.
 
@@ -91,27 +91,38 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 
 == Changelog ==
 
+= 1.1.2 =
+* Fixed relist brokerage fee calculation: the 100 ISK minimum order-modification fee was incorrectly applied per item rather than per order. For cheap high-volume items (e.g. ammunition) this caused relist costs to be overstated by orders of magnitude, making profitable items appear unprofitable or filter them out of results entirely. The fee is now calculated at order level and divided across the items in the stack.
+
+= 1.1.1 =
+* Fixed excessive spacing above and below card dividers in the Pricing and Advanced Options cards — spacing is now consistent with the gap between all other option fields.
+
 = 1.1.0 =
-* Added `[ett_trading_howto]` shortcode — collapsible in-page usage guide.
+* Added `[ett_trading_howto]` shortcode — collapsible in-page usage guide covering all tool options, readable results format, and tips.
 * Trading tool UI restructured with grouped cards for visual separation of Pricing Options, Advanced Options, margin filters, and brokerage settings.
 * Filter Options section repositioned below Pricing and Advanced Options.
-* Generate List and Generate Market Quickbar are now a single button that changes state; only one button is ever visible.
+* Generate List and Generate Market Quickbar are now a single button that changes state; only one button is ever visible at a time.
 * Capital exclusion now recursively removes all descendant market groups, fixing incorrect inclusion of capital ship hulls and their sub-tiers when the Ships group was selected.
-* Fighters and Standup Fighters added to the capital-sized exclusion list.
+* Fighters and Standup Fighters (all variants: Light, Support, Heavy) added to the capital-sized exclusion list.
 * Meta Only filter now greys out and defaults to No when any market group other than Ship Equipment is selected.
 * Exclude Capital-Sized filter now greys out and defaults to No when the Implants group is selected.
 * Added Override Brokerage Fee option — allows a manual percentage entry (minimum 1%) that replaces the character-derived broker fee; minimum effective fee is 100 ISK or 1%, whichever is greater.
-* Oldest price data timestamp now displayed in EVE time (UTC) rather than raw server time.
-* Reprocess Character and Filter Market Group dropdowns now auto-widen to fit their content.
-* Result legend added to the daily profit box clarifying the column order (Buy Price / Reprocess Value / 30d Volume or QTY Recommendation / Margin%).
+* Oldest price data timestamp now displayed as EVE time (UTC).
+* Reprocess Character and Filter Market Group dropdowns now auto-widen to fit their longest option.
+* Result legend added to the daily profit box clarifying the column order.
 * Connect with EVE Online button moved to above the character list.
 * Stack size and all numeric inputs now enforce a minimum of 1 or 0 as appropriate; zero and negative values are rejected.
-* Plugin shortcode pages now include `[ett_trading_howto]` in the cache bypass check.
 
 = 1.0.0 =
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Bug fix: relist brokerage fee was applied per item instead of per order, causing cheap items (e.g. ammunition) to appear far less profitable than they are when Re-list Brokerage Fees was enabled. No database changes.
+
+= 1.1.1 =
+Minor visual fix for card divider spacing. No functional or database changes.
 
 = 1.1.0 =
 UI overhaul, capital exclusion fix for ship hulls, new Override Brokerage Fee option, fighters added to capital filter, and a new how-to guide shortcode. No database changes. No configuration required after update.
