@@ -212,7 +212,7 @@ final class ETT_RT {
                         <ul>
                             <li>Price data is fetched periodically &mdash; check the <em>Oldest price data</em> timestamp (shown in EVE Time / UTC) to know how fresh your results are.</li>
                             <li>High-volume items with moderate margins (&gt;5%) are usually more consistently profitable than low-volume high-margin items.</li>
-                            <li>Meta modules from missions (e.g. Shield Extender IIs, Damage Controls) are often excellent reprocessing targets.</li>
+                            <li>Meta modules from NPCs (i.e. modules which cannot be manufactured / do not have a blueprint) are often excellent reprocessing targets.</li>
                             <li>Changing any setting automatically clears the results &mdash; simply click the button again to regenerate with the updated parameters.</li>
                         </ul>
                     </div>
@@ -542,13 +542,16 @@ final class ETT_RT {
                 $items_reprocessed = $num_batches * $portion_size;
                 $reprocess_value   = $stack_total / $items_reprocessed;
 
-                // Deduct relist fees per item if enabled
-                // Formula per update: max((1 - (0.50 + 0.06 × advBroker)) × brokerFee × buyPrice, 100)
+                // Deduct relist fees per item if enabled.
+                // The 100 ISK minimum is per *order*, not per item. Calculate the order-level
+                // cost first, then divide by the number of items in the order so the per-item
+                // reprocess value is adjusted correctly.
                 if ($relist_fees && $order_updates > 0 && $reprocess_value !== null && $buy_price !== null) {
-                    $discount          = 1.0 - (0.50 + 0.06 * $adv_broker_rel);
-                    $fee_per_update    = max($discount * $broker_fee * $buy_price, 100.0);
-                    $total_relist_cost = $fee_per_update * $order_updates;
-                    $reprocess_value  -= $total_relist_cost;
+                    $discount                  = 1.0 - (0.50 + 0.06 * $adv_broker_rel);
+                    $order_value               = $buy_price * $items_reprocessed;
+                    $fee_per_update_order      = max($discount * $broker_fee * $order_value, 100.0);
+                    $total_relist_cost_order   = $fee_per_update_order * $order_updates;
+                    $reprocess_value          -= $total_relist_cost_order / $items_reprocessed;
                 }
             }
 
