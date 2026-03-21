@@ -92,7 +92,7 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 == Changelog ==
 
 = 1.2.0.2 =
-* Fixed: Changelog display in the ETT Price Helper Changelog tab stopped rendering after the first occurrence of `== ` anywhere in the content. The section-boundary regex now requires `==` to be at the start of a line, preventing mid-line substrings from truncating the output.
+* Fixed: Changelog stopped rendering after the first occurrence of `== ` anywhere in the content — including mid-line substrings such as `=== 5` in code examples. The section-boundary regex now requires `==` to be at the start of a line, so inline `==` in changelog text no longer truncates the output.
 
 = 1.2.0.1 =
 * Fixed: Private hub keys (e.g. `c-n4od`) were being overwritten to `jita` before the database re-validation ran, causing all private hub price lookups to return Jita prices instead of the correct structure market data.
