@@ -17,6 +17,8 @@ final class ETT_RT {
         add_action('wp_ajax_ett_rt_generate_list',        [__CLASS__, 'ajax_generate_list']);
         add_action('wp_ajax_nopriv_ett_rt_generate_list', [__CLASS__, 'ajax_generate_list']);
         add_action('wp_ajax_ett_rt_get_characters',       [__CLASS__, 'ajax_get_characters']);
+        add_action('wp_ajax_ett_rt_get_hubs',             [__CLASS__, 'ajax_get_hubs']);
+        add_action('wp_ajax_nopriv_ett_rt_get_hubs',      [__CLASS__, 'ajax_get_hubs']);
     }
 
     public static function dir(): string {
@@ -163,7 +165,26 @@ final class ETT_RT {
                 <div class="ett-character-body ett-howto-body">
                     <div class="ett-howto-content" style="text-align:left; max-width:680px; margin:0 auto; line-height:1.6;">
 
-                        <h4 style="margin-top:0;">Overview</h4>
+                        <h4 style="margin-top:0; display:flex; align-items:center; flex-wrap:wrap; gap:8px;">Overview
+                            <a href="https://github.com/C4813/EVE-Trade-Tools-Reprocess-Trading" target="_blank" rel="noopener noreferrer" style="font-size:0.78em;font-weight:600;padding:2px 9px;background:#24292e;color:#fff;border-radius:3px;text-decoration:none;line-height:1.6;">GitHub</a>
+                            <button type="button" id="ett-changelog-btn" style="font-size:0.78em;font-weight:600;padding:2px 9px;background:#f0f0f0;color:#333;border:1px solid #ccc;border-radius:3px;cursor:pointer;line-height:1.6;">Changelog</button>
+                        </h4>
+                        <div id="ett-changelog-panel" style="display:none;margin:-4px 0 14px;padding:10px 14px;background:#f8f8f8;border:1px solid #ddd;border-radius:4px;font-size:0.88em;max-height:260px;overflow-y:auto;">
+                            <?php echo self::parse_changelog(); ?>
+                        </div>
+                        <script>
+                        (function(){
+                            var btn   = document.getElementById('ett-changelog-btn');
+                            var panel = document.getElementById('ett-changelog-panel');
+                            if (!btn || !panel) return;
+                            btn.addEventListener('click', function () {
+                                var open = panel.style.display !== 'none';
+                                panel.style.display = open ? 'none' : 'block';
+                                btn.textContent = open ? 'Changelog' : 'Hide Changelog';
+                            });
+                        })();
+                        </script>
+
                         <p>This tool identifies EVE Online market items that are profitable to <strong>buy on the market and reprocess</strong> into raw minerals/materials, which are then sold. It factors in your character&rsquo;s skills, standings, and brokerage fees to give you accurate per-item profit estimates.</p>
 
                         <h4>Step 1 &mdash; Authenticate a Character</h4>
@@ -232,6 +253,7 @@ final class ETT_RT {
         $meta_only       = (sanitize_key(wp_unslash($_POST['meta_only']       ?? 'yes')) === 'yes');
 
         $valid_hubs = ['jita', 'amarr', 'rens', 'dodixie', 'hek'];
+        // Kept as a local fallback; DB-based validation runs after DB connection.
         if (!in_array($hub_key, $valid_hubs, true)) $hub_key = 'jita';
 
         $group_name = self::trading_group_name($slug);
@@ -242,6 +264,15 @@ final class ETT_RT {
         $db = ETT_RT_ExtDB::get_db();
         if (is_wp_error($db)) {
             wp_send_json_error($db->get_error_message(), 500);
+        }
+
+        // Re-validate hub_key against what actually exists in the price database.
+        // This allows newly added hubs from Price Helper to be used automatically.
+        $db_hubs = $db->get_col('SELECT DISTINCT hub_key FROM ett_prices');
+        $db_hubs = is_array($db_hubs) ? array_map('sanitize_key', $db_hubs) : [];
+        if (!empty($db_hubs) && !in_array($hub_key, $db_hubs, true)) {
+            // Prefer jita if available, otherwise first in list
+            $hub_key = in_array('jita', $db_hubs, true) ? 'jita' : $db_hubs[0];
         }
 
         // Find root group ID by name
@@ -267,6 +298,8 @@ final class ETT_RT {
                   WHERE market_group_id IN ($safe)
                     AND (
                         name LIKE 'Capital%'
+                        OR name LIKE '% XL'
+                        OR name LIKE '% XL %'
                         OR name IN (
                             'Dreadnoughts',
                             'Carriers',
@@ -310,6 +343,15 @@ final class ETT_RT {
 
         $safe = implode(',', array_map('intval', $all_group_ids));
 
+        // Belt-and-suspenders: also filter at the item-name level.
+        // Capital-sized items all carry a "Capital " prefix in their name; XL ammo
+        // (fired by dreads) contains " XL" either as a suffix ("Carbonized Lead XL")
+        // or mid-string ("Guristas Inferno XL Torpedo"). Match both with two clauses.
+        // This catches any items that slipped through the market-group-level exclusion above.
+        $capital_name_clause = $exclude_capital
+            ? " AND t.name NOT LIKE 'Capital %' AND t.name NOT LIKE '% XL' AND t.name NOT LIKE '% XL %'"
+            : '';
+
         // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
         $rows = $db->get_results(
             "SELECT t.type_id, t.name,
@@ -326,6 +368,7 @@ final class ETT_RT {
              LEFT JOIN ett_industryActivityProducts mo ON mo.product_type_id = t.type_id
              WHERE t.published = 1
                AND t.market_group_id IN ($safe)
+               $capital_name_clause
              ORDER BY t.name ASC",
             ARRAY_A
         );
@@ -403,8 +446,8 @@ final class ETT_RT {
         $override_broker     = sanitize_key((string) ($_POST['override_broker'] ?? 'no')) === 'yes';
         $override_broker_pct = floatval(wp_unslash($_POST['override_broker_pct'] ?? 3.0));
         if ($override_broker) {
-            // Clamp: must be at least 1%, no more than 100%
-            $override_broker_pct = max(1.0, min(100.0, round($override_broker_pct, 2)));
+            // Clamp: must be at least 0.5%, no more than 100%
+            $override_broker_pct = max(0.5, min(100.0, round($override_broker_pct, 2)));
             $broker_fee          = $override_broker_pct / 100.0;
         }
         // Scrapmetal reprocessing yield: NPC station base is 50%, Scrapmetal Processing adds 2% per level.
@@ -611,8 +654,8 @@ final class ETT_RT {
         }
 
         $hub_key    = sanitize_key((string) ($_POST['trade_hub'] ?? 'jita'));
-        $valid_hubs = ['jita', 'amarr', 'rens', 'dodixie', 'hek'];
-        if (!in_array($hub_key, $valid_hubs, true)) $hub_key = 'jita';
+        // No hardcoded hub list — standings are calculated for any key that exists in hub_entities();
+        // unknown hubs simply receive default broker/reproc values (hub_entities returns null for unknowns).
 
         $user_id    = get_current_user_id();
         $characters = get_user_meta($user_id, 'ett_rt_characters', true);
@@ -682,6 +725,94 @@ final class ETT_RT {
             'characters'  => $result,
             'recommended' => !empty($result) ? $result[0]['character_id'] : null,
         ]);
+    }
+
+    /** Returns human-readable display name for a hub key. Fallback: ucfirst of key. */
+    private static function hub_labels(): array {
+        return [
+            'jita'    => 'Jita',
+            'amarr'   => 'Amarr',
+            'rens'    => 'Rens',
+            'dodixie' => 'Dodixie',
+            'hek'     => 'Hek',
+        ];
+    }
+
+    /**
+     * Parses readme.txt and returns the == Changelog == section as HTML.
+     * Lines starting with = X.Y.Z = become version headings;
+     * lines starting with * become list items.
+     */
+    private static function parse_changelog(): string {
+        $path = self::dir() . 'readme.txt';
+        if (!file_exists($path)) return '<p>Changelog not available.</p>';
+        $text = (string) file_get_contents($path);
+        if (!preg_match('/== Changelog ==\r?\n(.*?)(?:== |\z)/s', $text, $m)) {
+            return '<p>Changelog not available.</p>';
+        }
+        $lines  = preg_split('/\r?\n/', trim($m[1]));
+        $html   = '';
+        $in_ul  = false;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                if ($in_ul) { $html .= '</ul>'; $in_ul = false; }
+                continue;
+            }
+            if (preg_match('/^= (.+) =\s*$/', $line, $vm)) {
+                if ($in_ul) { $html .= '</ul>'; $in_ul = false; }
+                $html .= '<p style="margin:10px 0 4px;font-weight:700;">' . esc_html($vm[1]) . '</p>';
+            } elseif (str_starts_with($line, '* ')) {
+                if (!$in_ul) { $html .= '<ul style="margin:0 0 4px 18px;">'; $in_ul = true; }
+                $html .= '<li>' . esc_html(substr($line, 2)) . '</li>';
+            } else {
+                if ($in_ul) { $html .= '</ul>'; $in_ul = false; }
+                $html .= '<p style="margin:4px 0;">' . esc_html($line) . '</p>';
+            }
+        }
+        if ($in_ul) $html .= '</ul>';
+        return $html;
+    }
+
+    /**
+     * AJAX: returns the list of trade hubs available in the external price database.
+     * Reads DISTINCT hub_key values from ett_prices and maps them to display labels.
+     */
+    public static function ajax_get_hubs(): void {
+        check_ajax_referer('ett_rt_generate_list', 'nonce');
+
+        $db = ETT_RT_ExtDB::get_db();
+        if (is_wp_error($db)) {
+            wp_send_json_error($db->get_error_message(), 500);
+        }
+
+        $keys = $db->get_col('SELECT DISTINCT hub_key FROM ett_prices ORDER BY hub_key ASC');
+        if (!is_array($keys) || empty($keys)) {
+            wp_send_json_error('No trade hubs found in the price database.', 404);
+        }
+
+        $labels = self::hub_labels();
+        $hubs   = [];
+        foreach ($keys as $key) {
+            $key    = (string) $key;
+            $hubs[] = [
+                'key'   => $key,
+                'label' => $labels[$key] ?? ucfirst($key),
+            ];
+        }
+
+        // Sort: preferred order first (jita, amarr, rens, dodixie, hek), then alphabetical
+        $order = ['jita', 'amarr', 'rens', 'dodixie', 'hek'];
+        usort($hubs, function ($a, $b) use ($order) {
+            $ai = array_search($a['key'], $order, true);
+            $bi = array_search($b['key'], $order, true);
+            if ($ai !== false && $bi !== false) return $ai <=> $bi;
+            if ($ai !== false) return -1;
+            if ($bi !== false) return 1;
+            return strcmp($a['key'], $b['key']);
+        });
+
+        wp_send_json_success(['hubs' => $hubs]);
     }
 
     /** Returns faction and corp entity IDs per trade hub for standings calculations. */
