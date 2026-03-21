@@ -74,6 +74,53 @@ document.addEventListener('click', function (e) {
   body.classList.toggle('open');
 });
 
+// ── Trading tool: Hub loader ──────────────────────────────────────────────
+function loadHubs() {
+  var hubSel  = document.getElementById('ett-trade-hub');
+  if (!hubSel) return;
+
+  hubSel.innerHTML = '<option value="">— Loading hubs\u2026 —</option>';
+
+  var data = new FormData();
+  data.append('action', 'ett_rt_get_hubs');
+  data.append('nonce',  (typeof ettRt !== 'undefined' ? ettRt.nonce : ''));
+
+  var ajaxurl = (typeof ettRt !== 'undefined' ? ettRt.ajaxurl : '/wp-admin/admin-ajax.php');
+
+  fetch(ajaxurl, { method: 'POST', body: data })
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      if (!json.success || !json.data || !json.data.hubs || !json.data.hubs.length) {
+        // Fallback to static list if DB unavailable
+        hubSel.innerHTML =
+          '<option value="jita" selected>Jita</option>' +
+          '<option value="amarr">Amarr</option>' +
+          '<option value="rens">Rens</option>' +
+          '<option value="dodixie">Dodixie</option>' +
+          '<option value="hek">Hek</option>';
+        loadCharacters();
+        return;
+      }
+      var hubs  = json.data.hubs;
+      var html  = '';
+      hubs.forEach(function (h, i) {
+        html += '<option value="' + escHtml(h.key) + '"' + (i === 0 ? ' selected' : '') + '>' + escHtml(h.label) + '</option>';
+      });
+      hubSel.innerHTML = html;
+      loadCharacters();
+    })
+    .catch(function () {
+      // Fallback on network error
+      hubSel.innerHTML =
+        '<option value="jita" selected>Jita</option>' +
+        '<option value="amarr">Amarr</option>' +
+        '<option value="rens">Rens</option>' +
+        '<option value="dodixie">Dodixie</option>' +
+        '<option value="hek">Hek</option>';
+      loadCharacters();
+    });
+}
+
 // ── Trading tool: Character loader ───────────────────────────────────────
 function loadCharacters() {
   var hub   = document.getElementById('ett-trade-hub');
@@ -125,7 +172,7 @@ function loadCharacters() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadCharacters);
+document.addEventListener('DOMContentLoaded', loadHubs);
 
 // ── Button state management ───────────────────────────────────────────────
 function setButtonMode(btn, mode) {
@@ -164,11 +211,11 @@ document.addEventListener('input', function (e) {
   if (watchedIds.indexOf(e.target.id) !== -1) markResultsStale();
 });
 
-// ── Clamp override broker pct to 2 decimal places and min 1 on blur ──────
+// ── Clamp override broker pct to 2 decimal places and min 0.5 on blur ──────
 document.addEventListener('blur', function (e) {
   if (!e.target.matches('#ett-override-broker-pct')) return;
   var val = parseFloat(e.target.value);
-  if (isNaN(val) || val < 1) val = 1;
+  if (isNaN(val) || val < 0.5) val = 0.5;
   if (val > 100) val = 100;
   e.target.value = Math.round(val * 100) / 100; // max 2dp
 }, true);
