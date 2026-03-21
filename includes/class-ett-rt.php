@@ -746,7 +746,7 @@ final class ETT_RT {
         $path = self::dir() . 'readme.txt';
         if (!file_exists($path)) return '<p>Changelog not available.</p>';
         $text = (string) file_get_contents($path);
-        if (!preg_match('/== Changelog ==\r?\n(.*?)(?:== |\z)/s', $text, $m)) {
+        if (!preg_match('/== Changelog ==\r?\n(.*?)(?:\r?\n== |\z)/s', $text, $m)) {
             return '<p>Changelog not available.</p>';
         }
         $lines  = preg_split('/\r?\n/', trim($m[1]));
