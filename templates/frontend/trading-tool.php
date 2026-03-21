@@ -97,7 +97,7 @@ if (!defined('ABSPATH')) exit;
                     <div class="ett-field" id="ett-override-broker-pct-field">
                         <label for="ett-override-broker-pct">Brokerage Fee %</label>
                         <input type="number" id="ett-override-broker-pct" name="ett_override_broker_pct"
-                               min="1" max="100" step="0.01" value="1.00" />
+                               min="0.5" max="100" step="0.01" value="1.00" />
                     </div>
                 </div>
             </div>
@@ -116,11 +116,7 @@ if (!defined('ABSPATH')) exit;
                 <div class="ett-field">
                     <label for="ett-trade-hub">Trade Hub</label>
                     <select id="ett-trade-hub" name="ett_trade_hub">
-                        <option value="jita" selected>Jita</option>
-                        <option value="amarr">Amarr</option>
-                        <option value="rens">Rens</option>
-                        <option value="dodixie">Dodixie</option>
-                        <option value="hek">Hek</option>
+                        <option value="">&#8212; Loading hubs&hellip; &#8212;</option>
                     </select>
                 </div>
 
