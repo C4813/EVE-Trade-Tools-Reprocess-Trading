@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.0.1
+Stable tag: 1.2.0.2
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,6 +90,9 @@ Pages containing any of the plugin shortcodes are automatically marked as non-ca
 All WordPress-side data created by this plugin: the `ett_rt_characters` user meta entry for every user, OAuth state transients, and ESI character cache transients. The external database managed by Price Helper is never modified.
 
 == Changelog ==
+
+= 1.2.0.2 =
+* Fixed: Changelog display in the ETT Price Helper Changelog tab stopped rendering after the first occurrence of `== ` anywhere in the content. The section-boundary regex now requires `==` to be at the start of a line, preventing mid-line substrings from truncating the output.
 
 = 1.2.0.1 =
 * Fixed: Private hub keys (e.g. `c-n4od`) were being overwritten to `jita` before the database re-validation ran, causing all private hub price lookups to return Jita prices instead of the correct structure market data.
