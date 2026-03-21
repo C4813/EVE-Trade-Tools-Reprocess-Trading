@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,7 +28,7 @@ The trading tool queries the external EVE market database populated by Price Hel
 
 * **Scrapmetal Processing** skill — NPC station base yield is 50%, with 2% added per skill level (55% at level 5).
 * **Sales tax** — 7.5% base, reduced by 11% per level of Accounting, floored at 3.37%.
-* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 1%) that replaces the character-derived fee; minimum effective fee is always 100 ISK or 1%, whichever is greater.
+* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 0.5%) that replaces the character-derived fee; minimum effective fee is always 100 ISK or 0.5%, whichever is greater.
 * **Reprocessing tax** — 5% of adjusted output value, reduced to zero once effective corporation standing reaches 6.67. Connections (positive standing) or Diplomacy (negative standing) improve effective standing.
 * **Relist brokerage** — optional; accounts for order-modification fees based on Advanced Broker Relations level and the number of expected order updates.
 * **portionSize** — items are reprocessed in whole batches; the tool uses the correct batch size per item type.
@@ -41,7 +41,7 @@ The Generate List button transforms into the Generate Market Quickbar button aft
 
 All timestamps for price data age are displayed in EVE time (UTC).
 
-**Supported trade hubs:** Jita, Amarr, Rens, Dodixie, Hek
+**Supported trade hubs:** Determined dynamically from the Price Helper external database. Any hub present in the `ett_prices` table is available. Default fallback list: Jita, Amarr, Rens, Dodixie, Hek.
 
 **Supported market groups:** Ammunition & Charges, Drones, Implants, Ships, Ship Equipment, Ship and Module Modifications
 
@@ -90,6 +90,13 @@ Pages containing any of the plugin shortcodes are automatically marked as non-ca
 All WordPress-side data created by this plugin: the `ett_rt_characters` user meta entry for every user, OAuth state transients, and ESI character cache transients. The external database managed by Price Helper is never modified.
 
 == Changelog ==
+
+= 1.2.0 =
+* Trade hub list is now generated dynamically from the Price Helper external database (`ett_prices` table) rather than being hardcoded. Any hub present in the database automatically appears in the Trade Hub dropdown; only hubs with price data can be selected.
+* Added GitHub repository button and Changelog toggle button to the How-To guide next to the Overview heading.
+* Fixed capital-sized ammo (XL-sized ammunition) not being excluded when "Exclude Capital-Sized" is set to Yes. XL ammo market groups and items with an "XL " name prefix are now correctly filtered.
+* Fixed capital-sized modules (e.g. Capital Armor Plates) not being excluded when "Meta Only" is set to No. A belt-and-suspenders item-name filter now catches any capital items that slipped through the market-group-level exclusion.
+* Override Brokerage Fee minimum lowered from 1% to 0.5% to accommodate 0.0% Upwell markets. (A 0.5% SCC Surcharge always applies if tax is <0.5%).
 
 = 1.1.2 =
 * Fixed relist brokerage fee calculation: the 100 ISK minimum order-modification fee was incorrectly applied per item rather than per order. For cheap high-volume items (e.g. ammunition) this caused relist costs to be overstated by orders of magnitude, making profitable items appear unprofitable or filter them out of results entirely. The fee is now calculated at order level and divided across the items in the stack.
