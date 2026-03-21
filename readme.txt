@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.0
+Stable tag: 1.2.0.1
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,12 +91,16 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 
 == Changelog ==
 
+= 1.2.0.1 =
+* Fixed: Private hub keys (e.g. `c-n4od`) were being overwritten to `jita` before the database re-validation ran, causing all private hub price lookups to return Jita prices instead of the correct structure market data.
+* Fixed: Private hub display names were shown with only the first character capitalised (e.g. `C-n4od`). The trade hub dropdown now queries `ett_mapSolarSystems` for the canonical in-game system name (e.g. `C-N4OD`, `Jatate`) for any hub key not in the static label map.
+
 = 1.2.0 =
 * Trade hub list is now generated dynamically from the Price Helper external database (`ett_prices` table) rather than being hardcoded. Any hub present in the database automatically appears in the Trade Hub dropdown; only hubs with price data can be selected.
 * Added GitHub repository button and Changelog toggle button to the How-To guide next to the Overview heading.
 * Fixed capital-sized ammo (XL-sized ammunition) not being excluded when "Exclude Capital-Sized" is set to Yes. XL ammo market groups and items with an "XL " name prefix are now correctly filtered.
 * Fixed capital-sized modules (e.g. Capital Armor Plates) not being excluded when "Meta Only" is set to No. A belt-and-suspenders item-name filter now catches any capital items that slipped through the market-group-level exclusion.
-* Override Brokerage Fee minimum lowered from 1% to 0.5% to accommodate 0.0% Upwell markets. (A 0.5% SCC Surcharge always applies if tax is <0.5%).
+* Override Brokerage Fee minimum lowered from 1% to 0.5% to accommodate characters with highly optimised standings and skills.
 
 = 1.1.2 =
 * Fixed relist brokerage fee calculation: the 100 ISK minimum order-modification fee was incorrectly applied per item rather than per order. For cheap high-volume items (e.g. ammunition) this caused relist costs to be overstated by orders of magnitude, making profitable items appear unprofitable or filter them out of results entirely. The fee is now calculated at order level and divided across the items in the stack.
