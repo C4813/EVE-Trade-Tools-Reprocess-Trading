@@ -253,8 +253,7 @@ final class ETT_RT {
         $meta_only       = (sanitize_key(wp_unslash($_POST['meta_only']       ?? 'yes')) === 'yes');
 
         $valid_hubs = ['jita', 'amarr', 'rens', 'dodixie', 'hek'];
-        // Kept as a local fallback; DB-based validation runs after DB connection.
-        if (!in_array($hub_key, $valid_hubs, true)) $hub_key = 'jita';
+        // Note: no early fallback here — DB-based validation below handles all keys.
 
         $group_name = self::trading_group_name($slug);
         if ($group_name === '') {
@@ -792,12 +791,45 @@ final class ETT_RT {
         }
 
         $labels = self::hub_labels();
+
+        // For keys not in the static map, look up the canonical in-game name from
+        // ett_mapSolarSystems (populated by the SDE import in Price Helper).
+        // sanitize_key() lowercases everything, so the key stored in ett_prices for
+        // e.g. C-N4OD is 'c-n4od'. The SDE table stores the canonical cased name.
+        $unknown_keys = [];
+        foreach ($keys as $key) {
+            if (!isset($labels[(string) $key])) {
+                $unknown_keys[] = (string) $key;
+            }
+        }
+        if (!empty($unknown_keys)) {
+            // Build a LIKE-based lookup: match by lowercased name = key (sanitize_key lowercases).
+            // Safer than LOWER() which may not be available; use a PHP post-filter instead.
+            $all_names = $db->get_results(
+                'SELECT name FROM ett_mapSolarSystems',
+                ARRAY_A
+            );
+            if (is_array($all_names)) {
+                $name_by_lower = []; // lowercase → canonical
+                foreach ($all_names as $row) {
+                    $name_by_lower[strtolower((string) $row['name'])] = (string) $row['name'];
+                }
+                foreach ($unknown_keys as $key) {
+                    if (isset($name_by_lower[$key])) {
+                        $labels[$key] = $name_by_lower[$key];
+                    }
+                }
+            }
+        }
+
         $hubs   = [];
         foreach ($keys as $key) {
             $key    = (string) $key;
+            // Use canonical label if found; as a last resort show the key as-is
+            // (preserves whatever capitalisation the user entered when creating the hub).
             $hubs[] = [
                 'key'   => $key,
-                'label' => $labels[$key] ?? ucfirst($key),
+                'label' => $labels[$key] ?? $key,
             ];
         }
 
