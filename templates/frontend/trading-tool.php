@@ -90,7 +90,9 @@ if (!defined('ABSPATH')) exit;
                         <label for="ett-override-broker">Override Brokerage Fee?</label>
                         <select id="ett-override-broker" name="ett_override_broker">
                             <option value="no" selected>No</option>
-                            <option value="yes">Yes</option>
+                            <option value="buy">Buy Fee</option>
+                            <option value="sell">Sell Fee</option>
+                            <option value="both">Buy &amp; Sell Fee</option>
                         </select>
                     </div>
 
@@ -98,6 +100,7 @@ if (!defined('ABSPATH')) exit;
                         <label for="ett-override-broker-pct">Brokerage Fee %</label>
                         <input type="number" id="ett-override-broker-pct" name="ett_override_broker_pct"
                                min="0.5" max="100" step="0.01" value="1.00" />
+                        <div class="ett-char-rec-text">Include 0.5% Upwell SCC Surcharge</div>
                     </div>
                 </div>
             </div>
@@ -110,7 +113,7 @@ if (!defined('ABSPATH')) exit;
         <h4 class="ett-heading-full">Filter Options</h4>
         <div class="ett-trading-filters">
 
-            <!-- Left: Trade Hub + Reprocess Character -->
+            <!-- Left: Trade Hub + Trader -->
             <div class="ett-filter-col">
 
                 <div class="ett-field">
@@ -121,7 +124,7 @@ if (!defined('ABSPATH')) exit;
                 </div>
 
                 <div class="ett-field" id="ett-char-rec-field">
-                    <label for="ett-character">Reprocess Character</label>
+                    <label for="ett-character">Trader</label>
                     <select id="ett-character" name="ett_character" class="ett-select-wide">
                         <option value="">&#8212; Loading characters&#8230; &#8212;</option>
                     </select>
