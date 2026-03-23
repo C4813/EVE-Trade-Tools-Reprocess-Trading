@@ -1,244 +1,407 @@
-.ett-character { border:1px solid #ccc; margin-bottom:10px; }
-    .ett-character-header {
-        background:#f5f5f5;
-        padding:8px;
-        cursor:pointer;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-    }
-    .ett-character-body { display:none; padding:10px; }
-    .ett-character-body.open { display:block; }
-    .ett-disconnect { font-size:0.9em; color:#c00; text-decoration:none; }
-
-    .ett-character-body table.ett-table {
-        width:auto !important;
-        max-width:none !important;
-        table-layout:auto !important;
-        border-collapse:collapse !important;
-        display:inline-table !important;
-        margin:0 auto 20px !important;
-    }
-    .ett-character-body { text-align:center; }
-    .ett-character-body table.ett-table th,
-    .ett-character-body table.ett-table td {
-        border:1px solid #ccc !important;
-        padding:6px 8px !important;
-        text-align:center !important;
-        vertical-align:middle;
-        white-space:nowrap;
-    }
-    .ett-character-body table.ett-table th {
-        background:#f2f2f2 !important;
-        font-weight:700 !important;
-    }
-    .ett-character-body table.ett-table tbody tr:nth-child(odd),
-    .ett-character-body table.ett-table tbody tr:nth-child(even) {
-        background: inherit !important;
-    }
-    .ett-character-body table.ett-table tbody tr:hover {
-        background: inherit !important;
-    }
-    .ett-table td[rowspan] { vertical-align: middle; }
-    .ett-character-body table.ett-table th[title] { cursor: help; }
-
-/* ── How-to shortcode ─────────────────────────────────────────────────────── */
-.ett-howto-wrap { margin-bottom: 20px; }
-.ett-howto-header .ett-howto-toggle { font-size: 0.85em; color: #555; }
-.ett-howto-body h4 { margin: 14px 0 6px; }
-.ett-howto-body ul { margin: 6px 0 10px 20px; }
-.ett-howto-body p  { margin: 0 0 8px; }
-
-/* ── Trading Tool ─────────────────────────────────────────────────────────── */
-
-/* #1 – Centre the whole tool on the page */
-.ett-trading-tool {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
+// ── Pricing/meta options show/hide logic ──────────────────────────────────
+function setFieldGreyed(field, greyed) {
+  if (!field) return;
+  field.style.opacity       = greyed ? '0.4' : '';
+  field.style.pointerEvents = greyed ? 'none' : '';
 }
 
-.ett-trading-tool h4 {
-    margin: 0 0 12px;
-    text-align: center;
+function updatePricingVisibility() {
+  var buyQty         = document.getElementById('ett-buy-qty');
+  var relist         = document.getElementById('ett-relist-brokerage');
+  var overrideBroker = document.getElementById('ett-override-broker');
+
+  var buyQtyNo      = !buyQty         || buyQty.value         !== 'yes';
+  var relistNo      = !relist         || relist.value         !== 'yes';
+  var overrideNo    = !overrideBroker || overrideBroker.value === 'no';
+
+  var pctVolField        = document.getElementById('ett-pct-daily-vol')          ? document.getElementById('ett-pct-daily-vol').closest('.ett-field')          : null;
+  var orderUpdField      = document.getElementById('ett-order-updates')          ? document.getElementById('ett-order-updates').closest('.ett-field')          : null;
+  var overridePctField   = document.getElementById('ett-override-broker-pct-field');
+
+  setFieldGreyed(pctVolField,      buyQtyNo);
+  setFieldGreyed(orderUpdField,    relistNo);
+  setFieldGreyed(overridePctField, overrideNo);
 }
 
-.ett-trading-tool .ett-heading-full {
-    text-align: center;
-    margin: 0 0 12px;
+// #4 – Grey out Meta Only when market group is not ship_equipment
+function updateMetaOnlyVisibility() {
+  var groupEl    = document.getElementById('ett-market-group');
+  var metaField  = document.getElementById('ett-meta-only-field');
+  var metaSel    = document.getElementById('ett-meta-only');
+
+  if (!groupEl || !metaField || !metaSel) return;
+
+  var isShipEquipment = groupEl.value === 'ship_equipment';
+  setFieldGreyed(metaField, !isShipEquipment);
+  if (!isShipEquipment) metaSel.value = 'no';
 }
 
-/* Shared field block */
-.ett-trading-tool .ett-field {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 4px;
-    transition: opacity 0.1s;
+// Grey out Exclude Capital-Sized when implants is selected (no capitals in that group)
+function updateExcludeCapitalVisibility() {
+  var groupEl      = document.getElementById('ett-market-group');
+  var capitalField = document.getElementById('ett-exclude-capital-field');
+  var capitalSel   = document.getElementById('ett-exclude-capital');
+
+  if (!groupEl || !capitalField || !capitalSel) return;
+
+  var isImplants = groupEl.value === 'implants';
+  setFieldGreyed(capitalField, isImplants);
+  if (isImplants) capitalSel.value = 'no';
 }
 
-.ett-trading-tool .ett-field label {
-    font-weight: 600;
-    font-size: 0.92em;
-    white-space: nowrap;
+document.addEventListener('DOMContentLoaded', function () {
+  updatePricingVisibility();
+  updateMetaOnlyVisibility();
+  updateExcludeCapitalVisibility();
+});
+
+document.addEventListener('change', function (e) {
+  if (e.target.matches('#ett-buy-qty') || e.target.matches('#ett-relist-brokerage') || e.target.matches('#ett-override-broker')) {
+    updatePricingVisibility();
+  }
+  if (e.target.matches('#ett-market-group')) {
+    updateMetaOnlyVisibility();
+    updateExcludeCapitalVisibility();
+  }
+});
+
+// ── Character accordion ───────────────────────────────────────────────────
+document.addEventListener('click', function (e) {
+  const header = e.target.closest('.ett-character-header');
+  if (!header) return;
+  const body = header.nextElementSibling;
+  if (!body || !body.classList.contains('ett-character-body')) return;
+  body.classList.toggle('open');
+});
+
+// ── Trading tool: Hub loader ──────────────────────────────────────────────
+function loadHubs() {
+  var hubSel  = document.getElementById('ett-trade-hub');
+  if (!hubSel) return;
+
+  hubSel.innerHTML = '<option value="">— Loading hubs\u2026 —</option>';
+
+  var data = new FormData();
+  data.append('action', 'ett_rt_get_hubs');
+  data.append('nonce',  (typeof ettRt !== 'undefined' ? ettRt.nonce : ''));
+
+  var ajaxurl = (typeof ettRt !== 'undefined' ? ettRt.ajaxurl : '/wp-admin/admin-ajax.php');
+
+  fetch(ajaxurl, { method: 'POST', body: data })
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      if (!json.success || !json.data || !json.data.hubs || !json.data.hubs.length) {
+        // Fallback to static list if DB unavailable
+        hubSel.innerHTML =
+          '<option value="jita" selected>Jita</option>' +
+          '<option value="amarr">Amarr</option>' +
+          '<option value="rens">Rens</option>' +
+          '<option value="dodixie">Dodixie</option>' +
+          '<option value="hek">Hek</option>';
+        loadCharacters();
+        return;
+      }
+      var hubs  = json.data.hubs;
+      var html  = '';
+      hubs.forEach(function (h, i) {
+        html += '<option value="' + escHtml(h.key) + '"' + (i === 0 ? ' selected' : '') + '>' + escHtml(h.label) + '</option>';
+      });
+      hubSel.innerHTML = html;
+      loadCharacters();
+    })
+    .catch(function () {
+      // Fallback on network error
+      hubSel.innerHTML =
+        '<option value="jita" selected>Jita</option>' +
+        '<option value="amarr">Amarr</option>' +
+        '<option value="rens">Rens</option>' +
+        '<option value="dodixie">Dodixie</option>' +
+        '<option value="hek">Hek</option>';
+      loadCharacters();
+    });
 }
 
-/* Selects and number inputs */
-.ett-trading-tool .ett-field select,
-.ett-trading-tool .ett-field input[type="number"] {
-    width: 160px;
-    padding: 4px 6px;
-    border: 1px solid #8c8f94;
-    border-radius: 3px;
-    background: #fff;
-    font-size: 0.95em;
-    line-height: 1.4;
-    box-sizing: border-box;
-    appearance: auto;
-    -webkit-appearance: auto;
+// ── Trading tool: Character loader ───────────────────────────────────────
+function loadCharacters() {
+  var hub   = document.getElementById('ett-trade-hub');
+  var sel   = document.getElementById('ett-character');
+  var recEl = document.getElementById('ett-char-rec-text');
+  if (!hub || !sel) return;
+
+  sel.innerHTML = '<option value="">— Loading… —</option>';
+  if (recEl) recEl.textContent = '';
+
+  var data = new FormData();
+  data.append('action',    'ett_rt_get_characters');
+  data.append('nonce',     (typeof ettRt !== 'undefined' ? ettRt.nonce : ''));
+  data.append('trade_hub', hub.value);
+
+  var ajaxurl = (typeof ettRt !== 'undefined' ? ettRt.ajaxurl : '/wp-admin/admin-ajax.php');
+
+  fetch(ajaxurl, { method: 'POST', body: data })
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      if (!json.success) {
+        sel.innerHTML = '<option value="">— No characters —</option>';
+        return;
+      }
+      var chars = json.data.characters || [];
+      var rec   = json.data.recommended || '';
+      if (chars.length === 0) {
+        sel.innerHTML = '<option value="">— No characters linked —</option>';
+        return;
+      }
+      var html = '';
+      chars.forEach(function (c) {
+        var label = c.name
+          + ' (RTax: ' + (c.reproc_tax * 100).toFixed(2) + '%'
+          + ' | NPC BFee: ' + (c.broker_fee * 100).toFixed(2) + '%)';
+        html += '<option value="' + escHtml(c.character_id) + '"'
+              + (c.character_id === rec ? ' selected' : '') + '>'
+              + escHtml(label) + '</option>';
+      });
+      sel.innerHTML = html;
+      if (rec && recEl) {
+        var recChar = chars.find(function (c) { return c.character_id === rec; });
+        if (recChar) recEl.textContent = 'Recommended: ' + recChar.name;
+      }
+    })
+    .catch(function () {
+      sel.innerHTML = '<option value="">— Error loading characters —</option>';
+    });
 }
 
-/* Auto-widen selects for character / market group */
-.ett-trading-tool .ett-field select.ett-select-wide {
-    width: auto;
-    min-width: 160px;
-    max-width: 300px;
+document.addEventListener('DOMContentLoaded', loadHubs);
+
+// ── Button state management ───────────────────────────────────────────────
+function setButtonMode(btn, mode) {
+  if (!btn) return;
+  btn.dataset.mode = mode;
+  if (mode === 'quickbar')     btn.textContent = 'Generate Market Quickbar';
+  else if (mode === 'regenerate') btn.textContent = 'Regenerate List';
+  else                         btn.textContent = 'Generate List';
 }
 
-/* ── Outer card (wraps the two-column options grid) ── */
-.ett-card-outer {
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-sizing: border-box;
+function markResultsStale() {
+  var resultsEl = document.getElementById('ett-trading-results');
+  var btn       = document.getElementById('ett-btn-generate-list');
+  if (resultsEl && resultsEl.innerHTML !== '') {
+    resultsEl.innerHTML = '';
+    setButtonMode(btn, 'regenerate');
+  }
 }
 
-/* ── Inner card (sub-sections within outer card or filter column) ── */
-.ett-card {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
+document.addEventListener('change', function (e) {
+  if (e.target.matches('#ett-trade-hub')) loadCharacters();
+
+  var watchedIds = [
+    'ett-trade-hub', 'ett-market-group', 'ett-exclude-capital', 'ett-meta-only',
+    'ett-character', 'ett-sell-to', 'ett-buy-qty', 'ett-relist-brokerage',
+    'ett-override-broker'
+  ];
+  if (watchedIds.indexOf(e.target.id) !== -1) markResultsStale();
+});
+
+document.addEventListener('input', function (e) {
+  var watchedIds = [
+    'ett-min-margin', 'ett-max-margin', 'ett-min-daily-vol', 'ett-stack-size',
+    'ett-pct-daily-vol', 'ett-order-updates', 'ett-override-broker-pct'
+  ];
+  if (watchedIds.indexOf(e.target.id) !== -1) markResultsStale();
+});
+
+// ── Clamp override broker pct to 2 decimal places and min 0.5 on blur ──────
+document.addEventListener('blur', function (e) {
+  if (!e.target.matches('#ett-override-broker-pct')) return;
+  var val = parseFloat(e.target.value);
+  if (isNaN(val) || val < 0.5) val = 0.5;
+  if (val > 100) val = 100;
+  e.target.value = Math.round(val * 100) / 100; // max 2dp
+}, true);
+
+// ── Prevent 0 / negative in number inputs ────────────────────────────────
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('input[type="number"]')) return;
+  var val = parseFloat(e.target.value);
+  var min = parseFloat(e.target.getAttribute('min'));
+  if (isNaN(val) || (isFinite(min) && val < min)) {
+    e.target.value = isFinite(min) ? min : 0;
+  }
+});
+document.addEventListener('blur', function (e) {
+  if (!e.target.matches('input[type="number"]')) return;
+  var val = parseFloat(e.target.value);
+  var min = parseFloat(e.target.getAttribute('min'));
+  if (isNaN(val) || (isFinite(min) && val < min)) {
+    e.target.value = isFinite(min) ? min : 0;
+  }
+}, true);
+
+// ── #5 – UTC / EVE display (no "Time") ───────────────────────────────────
+function formatEveTime(rawDateStr) {
+  if (!rawDateStr) return 'Price data age unavailable';
+  var normalized = rawDateStr.replace(' ', 'T');
+  if (!normalized.endsWith('Z') && !normalized.includes('+')) normalized += 'Z';
+  var d = new Date(normalized);
+  if (isNaN(d.getTime())) return 'Oldest price data: ' + rawDateStr;
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  return 'Oldest price data: '
+    + d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())
+    + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds())
+    + ' EVE';
 }
 
-/* Last inner card in a column — no bottom margin */
-.ett-card:last-child {
-    margin-bottom: 0;
-}
+// ── Generate / Quickbar unified button ───────────────────────────────────
+document.addEventListener('click', function (e) {
+  if (!e.target.matches('#ett-btn-generate-list')) return;
 
-/* Divider within a combined card */
-.ett-card-divider {
-    width: 100%;
-    border: none;
-    border-top: 1px solid #ccc;
-    margin: -7px 0;
-}
+  var btn  = e.target;
+  var mode = btn.dataset.mode || 'generate';
 
-/* Full-width card for filter options section */
-.ett-card-full {
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-sizing: border-box;
-}
+  // ── Quickbar mode ──────────────────────────────────────────────────────
+  if (mode === 'quickbar') {
+    var resultsEl  = document.getElementById('ett-trading-results');
+    var groupEl    = document.getElementById('ett-market-group');
+    var groupLabel = groupEl ? groupEl.options[groupEl.selectedIndex].text : 'Items';
+    if (!resultsEl) return;
+    var items = resultsEl.querySelectorAll('li');
+    if (!items.length) return;
 
-/* Nested card inside filter column (capital/meta pair) */
-.ett-card.ett-card-inline {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    padding: 10px 12px;
-    margin-bottom: 0;
-}
+    var lines = ['+ ' + groupLabel];
+    items.forEach(function (li) {
+      var name   = li.dataset.name   || li.textContent.split('[')[0].trim();
+      var reproc = li.dataset.reproc || '';
+      var qty    = li.dataset.qty    || '';
+      var margin = li.dataset.margin || '';
+      var note   = reproc + '|' + qty + '|' + margin;
+      if (note.length > 25) note = note.slice(0, 25);
+      lines.push('- ' + name + ' [' + note + ']');
+    });
 
-/* Two-column filter section */
-.ett-trading-filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 40px;
-}
+    navigator.clipboard.writeText(lines.join('\n')).then(function () {
+      btn.textContent = 'Copied!';
+      setTimeout(function () { setButtonMode(btn, 'quickbar'); }, 1500);
+    });
+    return;
+  }
 
-.ett-trading-filters .ett-filter-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-}
+  // ── Generate mode ──────────────────────────────────────────────────────
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
 
-/* Two-column options grid INSIDE the outer card */
-.ett-trading-options {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 24px;
-    align-items: start;
-}
+  var resultsEl = document.getElementById('ett-trading-results');
+  if (resultsEl) resultsEl.innerHTML = '';
 
-.ett-trading-options .ett-options-col {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-}
+  var data = new FormData();
+  data.append('action',           'ett_rt_generate_list');
+  data.append('nonce',            (typeof ettRt !== 'undefined' ? ettRt.nonce : ''));
+  data.append('trade_hub',        document.getElementById('ett-trade-hub').value);
+  data.append('market_group',     document.getElementById('ett-market-group').value);
+  data.append('exclude_capital',  document.getElementById('ett-exclude-capital').value);
+  data.append('meta_only',        document.getElementById('ett-meta-only').value);
+  data.append('character_id',     document.getElementById('ett-character')     ? document.getElementById('ett-character').value     : '');
+  data.append('sell_to',          document.getElementById('ett-sell-to')       ? document.getElementById('ett-sell-to').value       : 'sell_orders');
+  data.append('stack_size',       document.getElementById('ett-stack-size')    ? document.getElementById('ett-stack-size').value    : '100');
+  data.append('min_margin',       document.getElementById('ett-min-margin')    ? document.getElementById('ett-min-margin').value    : '5');
+  data.append('max_margin',       document.getElementById('ett-max-margin')    ? document.getElementById('ett-max-margin').value    : '25');
+  data.append('min_volume',       document.getElementById('ett-min-daily-vol') ? document.getElementById('ett-min-daily-vol').value : '1');
+  data.append('relist_brokerage',    document.getElementById('ett-relist-brokerage')    ? document.getElementById('ett-relist-brokerage').value    : 'no');
+  data.append('order_updates',       document.getElementById('ett-order-updates')        ? document.getElementById('ett-order-updates').value        : '0');
+  data.append('override_broker',     document.getElementById('ett-override-broker')      ? document.getElementById('ett-override-broker').value      : 'no');
+  data.append('override_broker_pct', document.getElementById('ett-override-broker-pct') ? document.getElementById('ett-override-broker-pct').value  : '3');
 
-/* Buttons */
-.ett-trading-btn {
-    display: block;
-    margin: 0 auto 20px;
-    padding: 8px 18px;
-    background: #0073aa;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.95em;
-}
-.ett-trading-btn:hover { background: #005a87; }
+  var ajaxurl = (typeof ettRt !== 'undefined' ? ettRt.ajaxurl : '/wp-admin/admin-ajax.php');
 
-/* Hide number spinner arrows */
-.ett-trading-tool input[type="number"] { -moz-appearance: textfield; }
-.ett-trading-tool input[type="number"]::-webkit-inner-spin-button,
-.ett-trading-tool input[type="number"]::-webkit-outer-spin-button { display: none; }
+  fetch(ajaxurl, { method: 'POST', body: data })
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      btn.disabled = false;
+      if (!resultsEl) return;
 
-.ett-token-warning { color: #c00; font-weight: bold; margin: 4px 0 12px; }
-.ett-connect-wrap  { margin-bottom: 15px; }
-.ett-char-rec-text { font-size: 0.85em; color: #666; margin-top: 3px; }
-.ett-error         { color: #b32d2e; font-style: italic; }
-.ett-field         { transition: opacity 0.1s; }
+      if (!json.success) {
+        setButtonMode(btn, 'generate');
+        resultsEl.innerHTML = '<p class="ett-error">Error: ' + (json.data || 'Unknown error') + '</p>';
+        return;
+      }
 
-.ett-daily-profit {
-    margin: 12px 0 8px;
-    padding: 10px 14px;
-    background: #f0f7ee;
-    border-left: 4px solid #4a9e5c;
-    border-radius: 3px;
-    font-size: 1em;
-    color: #1a3a22;
-    text-align: center;
-}
-.ett-daily-profit strong { font-size: 1.1em; }
+      var items           = json.data.items      || [];
+      var oldestPriceDate = json.data.oldest_price_date || null;
 
-.ett-price-date {
-    font-size: 0.85em;
-    font-weight: normal;
-    color: #888;
-}
+      if (items.length === 0) {
+        setButtonMode(btn, 'generate');
+        resultsEl.innerHTML = '<p>No items found matching the selected filters.</p>';
+        return;
+      }
 
-/* #2 – Result reading legend: plain/subtle, not green */
-.ett-result-legend {
-    display: block;
-    margin-top: 8px;
-    font-size: 0.82em;
-    color: #666;
-    font-style: italic;
-    letter-spacing: 0.01em;
+      setButtonMode(btn, 'quickbar');
+
+      // ── Potential Daily Profit ──
+      var buyQtyEl         = document.getElementById('ett-buy-qty');
+      var pctVolEl         = document.getElementById('ett-pct-daily-vol');
+      var buyQtyOn         = buyQtyEl && buyQtyEl.value === 'yes';
+      var pctVol           = buyQtyOn && pctVolEl ? (parseFloat(pctVolEl.value) / 100) : 1;
+      var buyBrokerFee     = json.data.buy_broker_fee != null ? parseFloat(json.data.buy_broker_fee) : 0.03;
+      var buyOverrideActive = json.data.buy_override_active === true;
+
+      var totalDailyProfit = 0;
+      items.forEach(function (item) {
+        if (item.buy_price === null || item.reprocess_value === null || item.volume === null) return;
+        var qty         = buyQtyOn ? Math.max(1, Math.floor(item.volume * pctVol)) : Math.floor(item.volume * pctVol);
+        // Mirror PHP: when buy override active, apply 100 ISK floor on buy fee
+        var buyFeeIsk   = buyOverrideActive
+          ? Math.max(buyBrokerFee * item.buy_price, 100)
+          : buyBrokerFee * item.buy_price;
+        var costWithFee = item.buy_price + buyFeeIsk;
+        totalDailyProfit += (item.reprocess_value - costWithFee) * qty;
+      });
+
+      // #2 – Dynamic qty column label in legend
+      var qtyLabel = buyQtyOn ? 'QTY Recommendation' : '30d Volume';
+
+      var oldestDateStr = formatEveTime(oldestPriceDate);
+
+      var html = '<div class="ett-daily-profit">'
+               + 'Potential Daily Profit: <strong>'
+               + Math.round(totalDailyProfit).toLocaleString() + ' ISK</strong>'
+               + '<br><span class="ett-price-date">' + escHtml(oldestDateStr) + '</span>'
+               + '<span class="ett-result-legend">Item Name &nbsp;[ Buy Price &nbsp;/ &nbsp;Reprocess Value &nbsp;/ &nbsp;' + escHtml(qtyLabel) + ' &nbsp;/ &nbsp;Margin% ]</span>'
+               + '</div>';
+
+      html += '<h4>Item List (' + items.length + ' items)</h4>';
+      html += '<ul>';
+
+      items.forEach(function (item) {
+        var price   = item.buy_price !== null
+          ? Math.round(item.buy_price).toLocaleString() : 'N/A';
+        var reproc  = item.reprocess_value !== null
+          ? Math.round(item.reprocess_value).toLocaleString() : 'N/A';
+        var rawVol  = item.volume !== null ? item.volume : null;
+        var volume  = rawVol !== null
+          ? (buyQtyOn ? Math.max(1, Math.floor(rawVol * pctVol)) : Math.floor(rawVol * pctVol)).toLocaleString() : 'N/A';
+        var margin  = item.margin !== null && item.margin !== undefined
+          ? item.margin.toFixed(2) + '%' : 'N/A';
+        html += '<li'
+          + ' data-reproc="' + escHtml(reproc) + '"'
+          + ' data-qty="'    + escHtml(volume) + '"'
+          + ' data-margin="' + escHtml(margin) + '"'
+          + ' data-name="'   + escHtml(item.name) + '"'
+          + '>' + escHtml(item.name) + ' [' + price + ' / ' + reproc + ' / ' + volume + ' / ' + margin + ']</li>';
+      });
+
+      html += '</ul>';
+      resultsEl.innerHTML = html;
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      setButtonMode(btn, 'generate');
+      if (resultsEl) resultsEl.innerHTML = '<p class="ett-error">Request failed: ' + err.message + '</p>';
+    });
+});
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
