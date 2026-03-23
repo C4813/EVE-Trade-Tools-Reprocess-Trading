@@ -190,29 +190,38 @@ final class ETT_RT {
                         <h4>Step 1 &mdash; Authenticate a Character</h4>
                         <p>Before using the tool, at least one EVE Online character must be authenticated via the <em>Connect with EVE Online</em> button on the character profile page. Your character&rsquo;s <strong>Scrapmetal Processing</strong> skill level, standings, and fees are used to calculate accurate reprocessing yields and tax rates.</p>
 
-                        <h4>Step 2 &mdash; Filter Options</h4>
+                        <h4>Step 2 &mdash; Pricing Options</h4>
+                        <ul>
+                            <li><strong>Sell To:</strong> Whether to sell the reprocessed materials to <em>Buy Orders</em> (instant sale) or via <em>Sell Orders</em> (you list them; sales tax and broker fee apply). Sell Orders are usually more profitable but require patience.</li>
+                            <li><strong>Minimum Daily Volume:</strong> Filters out items with very low trade activity. Higher volume means easier buying and selling.</li>
+                            <li><strong>Stack Size:</strong> How many of an item you intend to buy and reprocess in one batch. Note: items have a <em>portion size</em> (the minimum reprocessable quantity). For example, ammunition has a portion size of 100, so a stack size of 100 represents exactly 1 reprocessing batch (100 physical items). A stack of 1000 = 10 batches of 100 ammo each. Profit is calculated per physical item based on whole batches; any remainder below a full portion size is discarded.</li>
+                            <li><strong>Minimum / Maximum Margin %:</strong> Only items within this profit margin range will appear. Margin is calculated as <code>((Reprocess Value &minus; Buy Cost) / Buy Cost) &times; 100</code>.</li>
+                        </ul>
+
+                        <h4>Step 3 &mdash; Filter Options</h4>
                         <ul>
                             <li><strong>Trade Hub:</strong> The market station to pull buy prices from (e.g. Jita 4-4).</li>
-                            <li><strong>Reprocess Character:</strong> The character whose skills &amp; standings determine your reprocessing yield and tax. Characters are sorted by most favourable first. The format shown is: <code>Name (Scrp: X | Tax: Y% | Fee: Z%)</code>.</li>
+                            <li><strong>Trader:</strong> The character whose skills &amp; standings determine your reprocessing yield and tax. Characters are sorted by most favourable first. The format shown is: <code>Name (RTax: X% | NPC BFee: Y%)</code>, where RTax is the reprocessing tax and NPC BFee is the standings-derived brokerage fee.</li>
                             <li><strong>Filter Market Group:</strong> The category of items to scan (e.g. Ship Equipment, Drones).</li>
                             <li><strong>Exclude Capital-Sized?:</strong> When set to <em>Yes</em>, filters out capital-sized modules, ship hulls, and fighters &mdash; these typically require specialist buyers and large capital to process.</li>
                             <li><strong>Meta Only?:</strong> When set to <em>Yes</em>, only shows <em>Meta</em> tier items (faction-originated T1 items dropped by NPCs). These are often the most reprocessing-profitable since they are bought cheaply but yield the same minerals as T1 originals.</li>
                         </ul>
 
-                        <h4>Step 3 &mdash; Pricing Options</h4>
-                        <ul>
-                            <li><strong>Sell To:</strong> Whether to sell the reprocessed materials to <em>Buy Orders</em> (instant sale) or via <em>Sell Orders</em> (you list them; sales tax and broker fee apply). Sell Orders are usually more profitable but require patience.</li>
-                            <li><strong>Minimum / Maximum Margin %:</strong> Only items within this profit margin range will appear. Margin is calculated as <code>((Reprocess Value &minus; Buy Cost) / Buy Cost) &times; 100</code>.</li>
-                            <li><strong>Minimum Daily Volume:</strong> Filters out items with very low trade activity. Higher volume means easier buying and selling.</li>
-                            <li><strong>Stack Size:</strong> How many of an item you intend to buy and reprocess in one batch. Note: items have a <em>portion size</em> (the minimum reprocessable quantity). For example, ammunition has a portion size of 100, so a stack size of 100 represents exactly 1 reprocessing batch (100 physical items). A stack of 1000 = 10 batches of 100 ammo each. Profit is calculated per physical item based on whole batches; any remainder below a full portion size is discarded.</li>
-                        </ul>
-
                         <h4>Step 4 &mdash; Advanced Options</h4>
                         <ul>
-                            <li><strong>Buy Order QTY Recommendation?:</strong> When set to <em>Yes</em>, the displayed quantity in the item list is scaled to the <em>% of Daily Volume</em> you set, giving you a recommended buy order size.</li>
+                            <li><strong>Buy Order QTY Recommendation?:</strong> When set to <em>Yes</em>, the displayed quantity in the item list is scaled to the <em>% of Daily Volume</em> you set, giving you a recommended buy order size. The quantity will always show a minimum of 1.</li>
                             <li><strong>% of Daily Volume:</strong> Only active when Buy Order QTY is enabled. Sets what fraction of average daily volume to recommend (e.g. 10% means buy up to 10% of daily traded volume).</li>
                             <li><strong>Re-list Brokerage Fees?:</strong> When set to <em>Yes</em>, the tool factors in the cost of modifying your buy orders a set number of times. Each update costs a fraction of the broker fee.</li>
                             <li><strong>Order Updates:</strong> Only active when Re-list is enabled. Enter how many times you expect to update each buy order before it fills.</li>
+                            <li><strong>Override Brokerage Fee?:</strong> Allows you to override the standings-derived brokerage fee for the buy side, sell side, or both. Useful when placing buy orders in an Upwell structure (which has a fixed fee regardless of standings) while selling minerals at an NPC station using your standings rate, or vice versa.
+                                <ul>
+                                    <li><em>No</em> &mdash; use your character&rsquo;s standings-derived fee for both buying and selling.</li>
+                                    <li><em>Buy Fee</em> &mdash; custom fee applies to buying modules; standings fee applies to selling minerals.</li>
+                                    <li><em>Sell Fee</em> &mdash; standings fee applies to buying modules; custom fee applies to selling minerals.</li>
+                                    <li><em>Buy &amp; Sell Fee</em> &mdash; custom fee applies to both sides.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Brokerage Fee %:</strong> Only active when an override mode is selected. The custom fee to apply. Note: when overriding the buy side, a minimum fee of 100 ISK per item is enforced (Upwell market behaviour).</li>
                         </ul>
 
                         <h4>Step 5 &mdash; Reading the Results</h4>
@@ -222,12 +231,15 @@ final class ETT_RT {
                         <ul>
                             <li><strong>Buy Price:</strong> The highest current buy order for that item at the selected hub (ISK per item).</li>
                             <li><strong>Reprocess Value:</strong> Estimated ISK returned per item after reprocessing, applying your skill yield, reprocessing tax, sales tax, and broker fees.</li>
-                            <li><strong>Qty:</strong> Recommended quantity to buy (either based on your stack size, or scaled to % of daily volume if enabled).</li>
+                            <li><strong>Qty:</strong> The regional 30-day average volume for that item, or the set percentage of that volume if <em>Buy Order QTY Recommendation</em> is set to <em>Yes</em>.</li>
                             <li><strong>Margin%:</strong> Profit margin as a percentage of the total buy cost including broker fee.</li>
                         </ul>
 
                         <h4>Step 6 &mdash; Market Quickbar</h4>
                         <p>After the list is generated, the button changes to <strong>Generate Market Quickbar</strong>. Clicking it copies a formatted list to your clipboard that can be pasted directly into the EVE Online Market Quickbar. Open the Market window in-game, click the Quickbar import icon, and paste.</p>
+                        <p>Each line in the quickbar list reads:</p>
+                        <p style="font-family:monospace; background:#f4f4f4; padding:6px 10px; border-radius:3px;">- Item Name &nbsp;[ Reprocess Value &nbsp;/ &nbsp;Qty &nbsp;/ &nbsp;Margin% ]</p>
+                        <p style="font-size:0.9em; color:#666;">Note: the note field is capped at 25 characters to fit EVE&rsquo;s quickbar note limit, so values may be truncated on high-margin items.</p>
 
                         <h4>Tips</h4>
                         <ul>
@@ -439,16 +451,22 @@ final class ETT_RT {
         $relist_fees      = sanitize_key((string) ($_POST['relist_brokerage'] ?? 'no')) === 'yes';
         $order_updates    = max(0, intval(wp_unslash($_POST['order_updates'] ?? 0)));
 
-        // Override broker fee: if active, replaces the character-derived broker_fee.
-        // Input is a percentage (e.g. 3.00 = 3%). Minimum allowed is 1% (0.01).
-        // When override is active the minimum per-item buy fee = max(rate × price, 100 ISK).
-        $override_broker     = sanitize_key((string) ($_POST['override_broker'] ?? 'no')) === 'yes';
+        // Override broker fee: supports four modes.
+        // 'no'   – use character's standings-derived fee for both buy and sell.
+        // 'buy'  – custom fee on buying modules; standings fee on selling minerals.
+        // 'sell' – standings fee on buying modules; custom fee on selling minerals.
+        // 'both' – custom fee for both.
+        // When custom fee applies to the buy side, a 100 ISK minimum per item is enforced
+        // (Upwell market behaviour). Input is a percentage (e.g. 3.00 = 3%).
+        $override_mode       = sanitize_key((string) ($_POST['override_broker'] ?? 'no'));
         $override_broker_pct = floatval(wp_unslash($_POST['override_broker_pct'] ?? 3.0));
-        if ($override_broker) {
-            // Clamp: must be at least 0.5%, no more than 100%
-            $override_broker_pct = max(0.5, min(100.0, round($override_broker_pct, 2)));
-            $broker_fee          = $override_broker_pct / 100.0;
-        }
+        $override_broker_pct = max(0.5, min(100.0, round($override_broker_pct, 2)));
+        $custom_fee          = $override_broker_pct / 100.0;
+
+        $char_broker_fee  = $broker_fee; // standings-derived, used as the "natural" fee
+        $buy_broker_fee   = (in_array($override_mode, ['buy', 'both'], true))  ? $custom_fee : $char_broker_fee;
+        $sell_broker_fee  = (in_array($override_mode, ['sell', 'both'], true)) ? $custom_fee : $char_broker_fee;
+        $buy_override_active = in_array($override_mode, ['buy', 'both'], true);
         // Scrapmetal reprocessing yield: NPC station base is 50%, Scrapmetal Processing adds 2% per level.
         // Formula: 0.50 × (1 + skill × 0.02) → level 5 = 55%, level 0 = 50%.
         $yield_multiplier = 0.50 * (1.0 + ($scrapmetal_skill * 0.02));
@@ -578,7 +596,7 @@ final class ETT_RT {
                 // Reprocessing tax: applied to adjusted value of output materials for the whole stack
                 $stack_reproc_tax = $reproc_tax * $stack_adjusted_value;
                 // Deduct market fees on sale proceeds, then subtract reproc tax (flat ISK cost)
-                $tax_rate    = $sales_tax + ($sell_to === 'sell_orders' ? $broker_fee : 0.0);
+                $tax_rate    = $sales_tax + ($sell_to === 'sell_orders' ? $sell_broker_fee : 0.0);
                 $stack_total = $stack_total * (1.0 - $tax_rate) - $stack_reproc_tax;
                 // Divide by the number of items actually reprocessed (whole batches only)
                 $items_reprocessed = $num_batches * $portion_size;
@@ -591,7 +609,7 @@ final class ETT_RT {
                 if ($relist_fees && $order_updates > 0 && $reprocess_value !== null && $buy_price !== null) {
                     $discount                  = 1.0 - (0.50 + 0.06 * $adv_broker_rel);
                     $order_value               = $buy_price * $items_reprocessed;
-                    $fee_per_update_order      = max($discount * $broker_fee * $order_value, 100.0);
+                    $fee_per_update_order      = max($discount * $buy_broker_fee * $order_value, 100.0);
                     $total_relist_cost_order   = $fee_per_update_order * $order_updates;
                     $reprocess_value          -= $total_relist_cost_order / $items_reprocessed;
                 }
@@ -601,11 +619,11 @@ final class ETT_RT {
             // When override is active: effective buy fee = max(rate × price, 100 ISK) per item.
             $margin = null;
             if ($buy_price !== null && $reprocess_value !== null && $buy_price > 0.0) {
-                if ($override_broker) {
-                    $buy_fee_isk   = max($broker_fee * $buy_price, 100.0);
+                if ($buy_override_active) {
+                    $buy_fee_isk   = max($buy_broker_fee * $buy_price, 100.0);
                     $cost_with_fee = $buy_price + $buy_fee_isk;
                 } else {
-                    $cost_with_fee = $buy_price * (1.0 + $broker_fee);
+                    $cost_with_fee = $buy_price * (1.0 + $buy_broker_fee);
                 }
                 $margin = (($reprocess_value - $cost_with_fee) / $cost_with_fee) * 100.0;
             }
@@ -628,7 +646,7 @@ final class ETT_RT {
             ];
         }
 
-        wp_send_json_success(['items' => $items, 'broker_fee' => $broker_fee, 'oldest_price_date' => $oldest_fetched_at ?? null]);
+        wp_send_json_success(['items' => $items, 'buy_broker_fee' => $buy_broker_fee, 'buy_override_active' => $buy_override_active, 'oldest_price_date' => $oldest_fetched_at ?? null]);
     }
 
     /** Maps the dropdown slug values to their names in ett_invMarketGroups. */
