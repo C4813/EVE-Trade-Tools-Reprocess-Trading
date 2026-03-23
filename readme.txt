@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.0.2
+Stable tag: 1.2.1
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,7 +28,7 @@ The trading tool queries the external EVE market database populated by Price Hel
 
 * **Scrapmetal Processing** skill — NPC station base yield is 50%, with 2% added per skill level (55% at level 5).
 * **Sales tax** — 7.5% base, reduced by 11% per level of Accounting, floored at 3.37%.
-* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden manually with a user-entered percentage (minimum 0.5%) that replaces the character-derived fee; minimum effective fee is always 100 ISK or 0.5%, whichever is greater.
+* **Broker fee** — 3% base, reduced by 0.3% per level of Broker Relations, with further reductions from faction and corporation standing at the chosen trade hub. Can be overridden with a user-entered percentage (minimum 0.5%) applied to the buy side, sell side, or both independently — useful when buy orders are placed in an Upwell structure and minerals are sold at an NPC station, or vice versa. When the buy side is overridden, a minimum effective fee of 100 ISK per item is enforced (Upwell market behaviour).
 * **Reprocessing tax** — 5% of adjusted output value, reduced to zero once effective corporation standing reaches 6.67. Connections (positive standing) or Diplomacy (negative standing) improve effective standing.
 * **Relist brokerage** — optional; accounts for order-modification fees based on Advanced Broker Relations level and the number of expected order updates.
 * **portionSize** — items are reprocessed in whole batches; the tool uses the correct batch size per item type.
@@ -91,12 +91,16 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 
 == Changelog ==
 
-= 1.2.0.2 =
-* Fixed: Changelog stopped rendering after the first occurrence of `== ` anywhere in the content — including mid-line substrings such as `=== 5` in code examples. The section-boundary regex now requires `==` to be at the start of a line, so inline `==` in changelog text no longer truncates the output.
-
-= 1.2.0.1 =
+= 1.2.1 =
+* Fixed: Buy Order QTY Recommendation now shows a minimum of 1 when the set percentage of daily volume calculates to less than 1.
 * Fixed: Private hub keys (e.g. `c-n4od`) were being overwritten to `jita` before the database re-validation ran, causing all private hub price lookups to return Jita prices instead of the correct structure market data.
 * Fixed: Private hub display names were shown with only the first character capitalised (e.g. `C-n4od`). The trade hub dropdown now queries `ett_mapSolarSystems` for the canonical in-game system name (e.g. `C-N4OD`, `Jatate`) for any hub key not in the static label map.
+* Fixed: Changelog stopped rendering after the first occurrence of `== ` anywhere in the content — including mid-line substrings such as `=== 5` in code examples. The section-boundary regex now requires `==` to be at the start of a line, so inline `==` in changelog text no longer truncates the output.
+* Changed: Override Brokerage Fee option replaced with a four-mode selector — No, Buy Fee, Sell Fee, Buy & Sell Fee — allowing the buy and sell broker fees to be overridden independently. This supports scenarios such as placing buy orders in an Upwell structure while selling minerals at an NPC station.
+* Changed: Character dropdown label format updated from `Name (Scrp: X | Tax: Y% | Fee: Z%)` to `Name (RTax: X% | NPC BFee: Y%)` — Scrapmetal Processing skill level removed; Reprocessing Tax and NPC Brokerage Fee are shown as percentages.
+* Changed: "Reprocess Character" field label renamed to "Trader".
+* Changed: How-To guide updated throughout — Steps 2 and 3 swapped to reflect UI layout order; Trader label and new character format documented; Buy Order QTY minimum of 1 noted; Override Brokerage Fee section expanded with all four modes and Upwell 100 ISK floor explained; Step 5 Qty description corrected to regional 30d volume; Step 6 now shows the exact quickbar line format with a note on the 25-character note field cap.
+* Added: "Include 0.5% Upwell SCC Surcharge" hint displayed below the Brokerage Fee % input when an override mode is active.
 
 = 1.2.0 =
 * Trade hub list is now generated dynamically from the Price Helper external database (`ett_prices` table) rather than being hardcoded. Any hub present in the database automatically appears in the Trade Hub dropdown; only hubs with price data can be selected.
@@ -131,6 +135,9 @@ All WordPress-side data created by this plugin: the `ett_rt_characters` user met
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Override Brokerage Fee now supports independent buy/sell/both modes; character label updated to show RTax and NPC BFee; QTY Recommendation minimum fixed to 1; several How-To corrections. No database changes. No configuration required after update.
 
 = 1.1.2 =
 Bug fix: relist brokerage fee was applied per item instead of per order, causing cheap items (e.g. ammunition) to appear far less profitable than they are when Re-list Brokerage Fees was enabled. No database changes.
