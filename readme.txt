@@ -2,7 +2,7 @@
 Contributors: C4813
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,6 +90,9 @@ Pages containing any of the plugin shortcodes are automatically marked as non-ca
 All WordPress-side data created by this plugin: the `ett_rt_characters` user meta entry for every user, OAuth state transients, and ESI character cache transients. The external database managed by Price Helper is never modified.
 
 == Changelog ==
+
+= 1.2.2 =
+* Market Quickbar note now shows Minimum Margin Value instead of Reprocess Value: the highest buy price you should pay for an item to still lock in at least your Minimum Margin % (reprocessed value scaled down by that margin, net of broker fees). Lets you stop bidding at a guaranteed-margin price instead of chasing values up toward full Reprocess Value. The on-screen results list and its Reprocess Value column are unchanged.
 
 = 1.2.1 =
 * Fixed: Buy Order QTY Recommendation now shows a minimum of 1 when the set percentage of daily volume calculates to less than 1.
