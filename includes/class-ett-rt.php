@@ -238,7 +238,7 @@ final class ETT_RT {
                         <h4>Step 6 &mdash; Market Quickbar</h4>
                         <p>After the list is generated, the button changes to <strong>Generate Market Quickbar</strong>. Clicking it copies a formatted list to your clipboard that can be pasted directly into the EVE Online Market Quickbar. Open the Market window in-game, click the Quickbar import icon, and paste.</p>
                         <p>Each line in the quickbar list reads:</p>
-                        <p style="font-family:monospace; background:#f4f4f4; padding:6px 10px; border-radius:3px;">- Item Name &nbsp;[ Reprocess Value &nbsp;/ &nbsp;Qty &nbsp;/ &nbsp;Margin% ]</p>
+                        <p style="font-family:monospace; background:#f4f4f4; padding:6px 10px; border-radius:3px;">- Item Name &nbsp;[ Minimum Margin Value &nbsp;/ &nbsp;Qty &nbsp;/ &nbsp;Margin% ]</p>
                         <p style="font-size:0.9em; color:#666;">Note: the note field is capped at 25 characters to fit EVE&rsquo;s quickbar note limit, so values may be truncated on high-margin items.</p>
 
                         <h4>Tips</h4>
@@ -628,6 +628,25 @@ final class ETT_RT {
                 $margin = (($reprocess_value - $cost_with_fee) / $cost_with_fee) * 100.0;
             }
 
+            // Minimum Margin Value: the highest buy price you can pay (excluding broker fee,
+            // for direct comparison with Buy Price) that still yields exactly $min_margin margin.
+            // Solve the margin formula above for buy_price given a target margin of $min_margin.
+            $min_margin_value = null;
+            if ($reprocess_value !== null) {
+                $cost_with_fee_target = $reprocess_value / (1.0 + ($min_margin / 100.0));
+                if ($buy_override_active) {
+                    $candidate = $cost_with_fee_target / (1.0 + $buy_broker_fee);
+                    // If the flat rate fee would exceed the 100 ISK floor, the linear solve holds.
+                    // Otherwise the floor applies and the fee is a flat 100 ISK instead.
+                    $min_margin_value = ($buy_broker_fee * $candidate >= 100.0)
+                        ? $candidate
+                        : ($cost_with_fee_target - 100.0);
+                } else {
+                    $min_margin_value = $cost_with_fee_target / (1.0 + $buy_broker_fee);
+                }
+                if ($min_margin_value < 0.0) $min_margin_value = 0.0;
+            }
+
             // Apply margin and volume filters
             if ($margin === null)           continue;
             if ($margin < $min_margin)      continue;
@@ -640,9 +659,10 @@ final class ETT_RT {
                 'name'            => (string) $r['name'],
                 'meta_tier'       => (string) $r['meta_tier'],
                 'buy_price'       => $buy_price,
-                'reprocess_value' => $reprocess_value,
-                'volume'          => $volume,
-                'margin'          => $margin,
+                'reprocess_value'   => $reprocess_value,
+                'min_margin_value'  => $min_margin_value,
+                'volume'            => $volume,
+                'margin'            => $margin,
             ];
         }
 
