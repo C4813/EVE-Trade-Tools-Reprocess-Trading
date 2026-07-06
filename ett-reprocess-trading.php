@@ -2,7 +2,7 @@
 /*
 Plugin Name: EVE Trade Tools Reprocess Trading
 Description: EVE Online SSO + Skills & Standings display for reprocess trading.
-Version: 1.2.1
+Version: 1.2.2
 Author: C4813
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@ Requires Plugins: ett-price-helper
 
 if (!defined('ABSPATH')) exit;
 
-define('ETT_RT_VERSION', '1.2.1');
+define('ETT_RT_VERSION', '1.2.2');
 define('ETT_RT_PATH', plugin_dir_path(__FILE__));
 define('ETT_RT_URL', plugin_dir_url(__FILE__));
 
