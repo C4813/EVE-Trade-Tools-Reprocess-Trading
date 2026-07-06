@@ -12,7 +12,7 @@ function updatePricingVisibility() {
 
   var buyQtyNo      = !buyQty         || buyQty.value         !== 'yes';
   var relistNo      = !relist         || relist.value         !== 'yes';
-  var overrideNo    = !overrideBroker || overrideBroker.value !== 'yes';
+  var overrideNo    = !overrideBroker || overrideBroker.value === 'no';
 
   var pctVolField        = document.getElementById('ett-pct-daily-vol')          ? document.getElementById('ett-pct-daily-vol').closest('.ett-field')          : null;
   var orderUpdField      = document.getElementById('ett-order-updates')          ? document.getElementById('ett-order-updates').closest('.ett-field')          : null;
@@ -154,9 +154,8 @@ function loadCharacters() {
       var html = '';
       chars.forEach(function (c) {
         var label = c.name
-          + ' (Scrp: ' + c.scrapmetal
-          + ' | Tax: ' + (c.reproc_tax * 100).toFixed(2) + '%'
-          + ' | Fee: ' + (c.broker_fee * 100).toFixed(2) + '%)';
+          + ' (RTax: ' + (c.reproc_tax * 100).toFixed(2) + '%'
+          + ' | NPC BFee: ' + (c.broker_fee * 100).toFixed(2) + '%)';
         html += '<option value="' + escHtml(c.character_id) + '"'
               + (c.character_id === rec ? ' selected' : '') + '>'
               + escHtml(label) + '</option>';
@@ -270,11 +269,11 @@ document.addEventListener('click', function (e) {
 
     var lines = ['+ ' + groupLabel];
     items.forEach(function (li) {
-      var name   = li.dataset.name   || li.textContent.split('[')[0].trim();
-      var reproc = li.dataset.reproc || '';
-      var qty    = li.dataset.qty    || '';
-      var margin = li.dataset.margin || '';
-      var note   = reproc + '|' + qty + '|' + margin;
+      var name      = li.dataset.name      || li.textContent.split('[')[0].trim();
+      var minMargin = li.dataset.minmargin || '';
+      var qty       = li.dataset.qty       || '';
+      var margin    = li.dataset.margin    || '';
+      var note   = minMargin + '|' + qty + '|' + margin;
       if (note.length > 25) note = note.slice(0, 25);
       lines.push('- ' + name + ' [' + note + ']');
     });
@@ -326,7 +325,6 @@ document.addEventListener('click', function (e) {
       }
 
       var items           = json.data.items      || [];
-      var brokerFee       = json.data.broker_fee != null ? parseFloat(json.data.broker_fee) : 0.03;
       var oldestPriceDate = json.data.oldest_price_date || null;
 
       if (items.length === 0) {
@@ -338,21 +336,21 @@ document.addEventListener('click', function (e) {
       setButtonMode(btn, 'quickbar');
 
       // ── Potential Daily Profit ──
-      var buyQtyEl       = document.getElementById('ett-buy-qty');
-      var pctVolEl       = document.getElementById('ett-pct-daily-vol');
-      var overrideEl     = document.getElementById('ett-override-broker');
-      var buyQtyOn       = buyQtyEl && buyQtyEl.value === 'yes';
-      var pctVol         = buyQtyOn && pctVolEl ? (parseFloat(pctVolEl.value) / 100) : 1;
-      var overrideActive = overrideEl && overrideEl.value === 'yes';
+      var buyQtyEl         = document.getElementById('ett-buy-qty');
+      var pctVolEl         = document.getElementById('ett-pct-daily-vol');
+      var buyQtyOn         = buyQtyEl && buyQtyEl.value === 'yes';
+      var pctVol           = buyQtyOn && pctVolEl ? (parseFloat(pctVolEl.value) / 100) : 1;
+      var buyBrokerFee     = json.data.buy_broker_fee != null ? parseFloat(json.data.buy_broker_fee) : 0.03;
+      var buyOverrideActive = json.data.buy_override_active === true;
 
       var totalDailyProfit = 0;
       items.forEach(function (item) {
         if (item.buy_price === null || item.reprocess_value === null || item.volume === null) return;
-        var qty         = Math.floor(item.volume * pctVol);
-        // Mirror PHP: when override active, apply 100 ISK floor on buy fee
-        var buyFeeIsk   = overrideActive
-          ? Math.max(brokerFee * item.buy_price, 100)
-          : brokerFee * item.buy_price;
+        var qty         = buyQtyOn ? Math.max(1, Math.floor(item.volume * pctVol)) : Math.floor(item.volume * pctVol);
+        // Mirror PHP: when buy override active, apply 100 ISK floor on buy fee
+        var buyFeeIsk   = buyOverrideActive
+          ? Math.max(buyBrokerFee * item.buy_price, 100)
+          : buyBrokerFee * item.buy_price;
         var costWithFee = item.buy_price + buyFeeIsk;
         totalDailyProfit += (item.reprocess_value - costWithFee) * qty;
       });
@@ -377,13 +375,16 @@ document.addEventListener('click', function (e) {
           ? Math.round(item.buy_price).toLocaleString() : 'N/A';
         var reproc  = item.reprocess_value !== null
           ? Math.round(item.reprocess_value).toLocaleString() : 'N/A';
+        var minMarginVal = item.min_margin_value !== null && item.min_margin_value !== undefined
+          ? Math.round(item.min_margin_value).toLocaleString() : 'N/A';
         var rawVol  = item.volume !== null ? item.volume : null;
         var volume  = rawVol !== null
-          ? Math.floor(rawVol * pctVol).toLocaleString() : 'N/A';
+          ? (buyQtyOn ? Math.max(1, Math.floor(rawVol * pctVol)) : Math.floor(rawVol * pctVol)).toLocaleString() : 'N/A';
         var margin  = item.margin !== null && item.margin !== undefined
           ? item.margin.toFixed(2) + '%' : 'N/A';
         html += '<li'
           + ' data-reproc="' + escHtml(reproc) + '"'
+          + ' data-minmargin="' + escHtml(minMarginVal) + '"'
           + ' data-qty="'    + escHtml(volume) + '"'
           + ' data-margin="' + escHtml(margin) + '"'
           + ' data-name="'   + escHtml(item.name) + '"'
